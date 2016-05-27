@@ -33,7 +33,7 @@ object TransformSpec {
 
   import model.ProtectionApplication
 
-  val fp2016RApplicationequestBody=Json.toJson(ProtectionApplication(
+  val fp2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
     protectionType = "FP2016"
   )).as[JsObject]
 
@@ -60,7 +60,7 @@ object TransformSpec {
       |
     """.stripMargin).as[JsObject]
 
-  val unsuccessfulCreateFP2016DesResponseBody=Json.parse(
+  val unsuccessfulCreateIP2014DesResponseBody=Json.parse(
     s"""
       |  {
       |      "nino": "${testNinoWithoutSuffix}",
@@ -74,7 +74,16 @@ object TransformSpec {
       |  }
     """.stripMargin).as[JsObject]
 
+  val ip2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
+    protectionType = "IP2016",
+    postADayBenefitCrystallisationEvents = Some(100000.00),
+    preADayPensionInPayment = Some(100000.00),
+    uncrystallisedRights = Some(200000.00),
+    nonUKRights = Some(800000.00),
+    relevantAmount = Some(1200000.00)
+  )).as[JsObject]
 }
+
 class TransformSpec extends UnitSpec{
 
   import Transformers._
@@ -82,7 +91,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid received FP2016 protection application request" should {
     "transform to a valid DES Create Lifetime Allowance request body" in {
-      val desRequestBody = mdtpApplicationToDesCreatePLARequestBody(testNinoWithoutSuffix, fp2016RApplicationequestBody)
+      val desRequestBody = mdtpApplicationToDesCreatePLARequestBody(testNinoWithoutSuffix, fp2016ApplicationRequestBody)
       val desTopLevelFields=desRequestBody.get.value
       desTopLevelFields.size shouldBe 2
       desTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
@@ -97,6 +106,7 @@ class TransformSpec extends UnitSpec{
   "A valid DES response to a successful FP2016 Create Lifetime Allowance request" should {
     "transform to a successful and valid FP2016 application response body for the original MDTP client request" in {
       val mdtpApplicationResponseBody = desCreatePLAResponseBodyToMdtpProtection(testNinoSuffixChar.get, successfulCreateFP2016DesResponseBody)
+      println("MDTP response: " + mdtpApplicationResponseBody)
       val topLevelFields = mdtpApplicationResponseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
@@ -113,8 +123,8 @@ class TransformSpec extends UnitSpec{
 
   "A valid DES response to an unsuccessful IP2016 Create Lifetime Allowance request" should {
     "transform to a unsuccessful but valid FP2016 application response body for the original MDTP client request" in {
-      val mdtpApplicationResponseBody = desCreatePLAResponseBodyToMdtpProtection(testNinoSuffixChar.get, unsuccessfulCreateFP2016DesResponseBody)
-      println(mdtpApplicationResponseBody)
+      val mdtpApplicationResponseBody = desCreatePLAResponseBodyToMdtpProtection(testNinoSuffixChar.get, unsuccessfulCreateIP2014DesResponseBody)
+      println("MDTP response: " + mdtpApplicationResponseBody)
       val topLevelFields = mdtpApplicationResponseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("protectionType").get.as[JsString].value shouldBe "IP2014"
@@ -122,6 +132,26 @@ class TransformSpec extends UnitSpec{
       topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       topLevelFields.get("notificationID").get.as[JsNumber].value.toInt shouldBe 10
+    }
+  }
+
+  "A valid received IP2016 protection application request" should {
+    "transform to a valid DES Create Lifetime Allowanace request body" in {
+      val desRequestBody = mdtpApplicationToDesCreatePLARequestBody(testNinoWithoutSuffix, ip2016ApplicationRequestBody)
+      println("DES request body = " + desRequestBody)
+      val desTopLevelFields=desRequestBody.get.value
+      desTopLevelFields.size shouldBe 2
+      desTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
+      val protection=desTopLevelFields.get("protection")
+      protection.isDefined shouldBe true
+      val protectionFields = protection.get.as[JsObject].value
+      protectionFields.size shouldBe 6
+      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
+      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
+      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
+      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
     }
   }
 }

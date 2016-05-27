@@ -35,6 +35,7 @@ object Transformers {
   private def renameIfExists(origName: String, newName: String): Reads[JsObject] =
     rename(origName, newName) orElse Reads.pure(Json.obj())
 
+
   private def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsString].map(s => JsNumber(lookupTable.indexOf(s.value))))
 
@@ -47,30 +48,48 @@ object Transformers {
   private def int2StringIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     int2String(fieldName, lookupTable) orElse Reads.pure(Json.obj())
 
+  private def moveToProtection(fieldName: String, newFieldName:Option[String] = None) =
+    (__ \ "protection" \ newFieldName.getOrElse(fieldName)).json.copyFrom((__ \ fieldName).json.pick) andThen
+      (__ \ fieldName).json.prune
+
+  private def moveToProtectionIfExists(fieldName: String, newFieldName:Option[String] = None) =
+    ((__ \ "protection" \ newFieldName.getOrElse(fieldName)).json.copyFrom((__ \ fieldName).json.pick)
+        orElse Reads.pure(Json.obj()
+    ) andThen (__ \ fieldName).json.prune)
+
+  private def remove(fieldName: String) = (__ \ fieldName).json.prune
+
   /**
     * Transform an incoming MDTP API protection application request body Json to a request body for the corresponding
     * outbound DES API Create Lifetime Allowance request
+    *
     * @param ninoWithoutSuffix the NINO with the suffix character dropped, as per DES API requirements
     * @param mdtpApplicationJson the incoming protecion applicaion request body
     * @return
     */
   def mdtpApplicationToDesCreatePLARequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
-    val desProtectionFromMdtpApplication =
-      (rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
-        renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") reduce
-    val desRequestBodyFromDesProtection = __.json.pickBranch(
-      (__ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
-        (__ \ 'protection).json.copyFrom((__).json.pick) reduce
-    )
-    for (
-      desProtectionJson <- mdtpApplicationJson.transform(desProtectionFromMdtpApplication);
-      desRequestBody <- desProtectionJson.transform(desRequestBodyFromDesProtection)
-    ) yield desRequestBody
+
+    val moveFieldsToProtectionObject=
+      (string2IntIfExists("protectionType", protectionTypes) andThen moveToProtection("protectionType", Some("type"))) and
+      moveToProtectionIfExists("preADayPensionInPayment") and
+      moveToProtectionIfExists("postADayBenefitCrystallisationEvents", Some("postADayBCE")) and
+      moveToProtectionIfExists("nonUKRights") and
+      moveToProtectionIfExists("uncrystallisedRights") and
+      moveToProtectionIfExists("relevantAmount") reduce
+
+
+    val mdtpApplicationToDesRequestTransformer =
+      __.json.pickBranch((
+           __ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
+          moveFieldsToProtectionObject reduce)
+
+      mdtpApplicationJson.transform(mdtpApplicationToDesRequestTransformer)
   }
 
   /**
     * Transform a received DES Create API response body into the MDTP API equivalent to be returned to the client of this
     * service.
+    *
     * @param ninoSuffix the last character of the NINO associated with the request - needs to be appended to the
     *                   NINO returned by the DES API
     * @param desResponseJson the json body received from DES in response to a Create Lifetime Allowance request.
@@ -89,6 +108,7 @@ object Transformers {
         (copyToTopLevel("type") andThen rename("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
         (copyToTopLevelIfExists("status") andThen int2StringIfExists("status", protectionStatuses)) and
         copyToTopLevelIfExists("relevantAmount") and
+        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("preADayPensionInPayment") and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("nonUKRights") and
@@ -115,6 +135,7 @@ object Transformers {
 
     val toMdtpProtection =
       ((__ \ 'nino).json.update(of[JsString].map { case JsString(s) => JsString(s + ninoSuffix) }) and
+        renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference")  and
        copyProtectionDetailsToTopLevel and
       (
         // replace certificate date with full ISO8601 date/time
