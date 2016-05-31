@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package model
 
-import play.api.libs.json.Json
+package util
 
-case class ProtectionApplication (
-  protectionType: String,
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
-  pensionDebitAmount: Option[Double] = None) 
-
-object ProtectionApplication {
-  implicit val protectionApplicationFormat = Json.format[ProtectionApplication]
+object NinoHelper {
+  def dropNinoSuffix(nino: String): (String, Option[Char]) = {
+    val lastChar = nino.last
+    if (lastChar.isLetter) {
+      (nino.substring(0,nino.length-1), Some(lastChar))
+    }
+    else {
+      (nino, None)
+    }
+  }
 }
