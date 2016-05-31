@@ -1,4 +1,4 @@
 # microservice specific routes
 
 GET        /hello-world                      controllers.MicroserviceHelloWorld.hello
-POST       /individuals/:nino/protections    controllers.CreateProtectionsController.applyForProtection
+POST       /individuals/:nino/protections    controllers.CreateProtectionsController.applyForProtection(nino: String)

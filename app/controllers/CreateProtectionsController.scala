@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package controllers
 
 import model.{Protection, ProtectionApplication}
@@ -23,6 +24,8 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
 import model.Error
 import scala.concurrent.Future
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object CreateProtectionsController extends CreateProtectionsController {
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package connectors
 
 import config.WSHttp
@@ -20,7 +21,7 @@ import play.api.libs.json.{JsResult, JsObject, JsValue, Json}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http._
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContext}
 
 object NpsConnector extends NpsConnector with ServicesConfig {
 
@@ -31,12 +32,12 @@ trait NpsConnector {
 
   // add addtional headers
   implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("Accept" -> "application/vnd.hmrc.1.0+json", "Content-Type" -> "application/json")
-  val http: HttpGet with HttpPost with HttpPut
+  def http: HttpGet with HttpPost with HttpPut
   val serviceUrl: String
   def url(path: String): String = s"$serviceUrl$path"
   private def ninoWithoutSuffix(nino: String): String = nino.substring(0, 8)
 
-  def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier): Future[JsObject] = {
+  def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsObject] = {
     val requestUrl = url(  s"/individual/${ninoWithoutSuffix(nino)}/protection")
 //    val requestJson: JsValue = Json.parse("""{"protectionType":1}""")
 

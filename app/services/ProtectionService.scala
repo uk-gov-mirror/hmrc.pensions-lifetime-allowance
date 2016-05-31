@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package services
 
 import connectors.NpsConnector
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.play.http.{HttpResponse, HeaderCarrier}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
 object ProtectionService extends ProtectionService {
@@ -30,7 +31,7 @@ trait ProtectionService {
 
   val nps: NpsConnector
 
-  def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier): Future[JsObject] = {
+  def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsObject] = {
 
     // Call transformation util
     nps.applyForProtection(nino, body)
