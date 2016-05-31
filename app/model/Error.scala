@@ -18,15 +18,8 @@ package model
 
 import play.api.libs.json.Json
 
-case class ProtectionApplication (
-  protectionType: String,
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
-  pensionDebitAmount: Option[Double] = None) 
+case class Error(message: String)
 
-object ProtectionApplication {
-  implicit val protectionApplicationFormat = Json.format[ProtectionApplication]
+object Error {
+  implicit val errorFormat = Json.format[Error]
 }
