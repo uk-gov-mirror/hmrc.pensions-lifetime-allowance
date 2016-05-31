@@ -41,9 +41,12 @@ trait CreateProtectionsController extends BaseController {
 
     protectionApplicationJs.fold(
       errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
-      p => protectionService.applyForProtection(nino, request.body.as[JsObject]).map { Ok(_) }
+      p => protectionService.applyForProtection(nino, request.body.as[JsObject]) map { response =>
+        response.fold(
+          errors => BadRequest(Json.toJson(Error(message = "error transforming request: " + errors))),
+          validResult => Ok(validResult)
+        )
+      }
     )
   }
-
-
 }
