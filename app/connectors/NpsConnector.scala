@@ -17,6 +17,7 @@
 package connectors
 
 import config.WSHttp
+import util.ResponseHandler
 import play.api.libs.json.{JsResult, JsObject, JsValue, Json}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http._
@@ -38,7 +39,7 @@ trait NpsConnector {
   private def ninoWithoutSuffix(nino: String): String = nino.substring(0, 8)
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsObject] = {
-    val requestUrl = url(  s"/individual/${ninoWithoutSuffix(nino)}/protection")
+    val requestUrl = url(  s"/protect-your-lifetime-allowance/individual/${ninoWithoutSuffix(nino)}/protection")
 //    val requestJson: JsValue = Json.parse("""{"protectionType":1}""")
 
     val responseFut = http.POST[JsValue, HttpResponse](requestUrl, body)
