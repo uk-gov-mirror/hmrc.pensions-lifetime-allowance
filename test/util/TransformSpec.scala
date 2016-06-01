@@ -100,14 +100,14 @@ class TransformSpec extends UnitSpec{
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
-      topLevelFields.get("id").get.as[JsNumber].value.toInt shouldBe 1
+      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("protectionType").get.as[JsString].value shouldBe "FP2016"
       topLevelFields.get("certificateDate").get.as[JsString].value shouldBe "2015-05-22T12:22:59"
       topLevelFields.get("status").get.as[JsString].value shouldBe "Open"
       topLevelFields.get("protectionReference").get.as[JsString].value shouldBe "FP161234567890C"
       topLevelFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1250000.00
-      topLevelFields.get("notificationID").get.as[JsNumber].value.toInt shouldBe 12
+      topLevelFields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 12
     }
   }
 
@@ -118,10 +118,10 @@ class TransformSpec extends UnitSpec{
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("protectionType").get.as[JsString].value shouldBe "IP2014"
-      topLevelFields.get("id").get.as[JsNumber].value.toInt shouldBe 1
+      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
-      topLevelFields.get("notificationID").get.as[JsNumber].value.toInt shouldBe 10
+      topLevelFields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
     }
   }
 }

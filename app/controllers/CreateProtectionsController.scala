@@ -18,6 +18,7 @@ package controllers
 
 import model.{Protection, ProtectionApplication}
 import play.api.mvc._
+import play.api.http.Status
 import services.ProtectionService
 import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -42,10 +43,15 @@ trait CreateProtectionsController extends BaseController {
     protectionApplicationJs.fold(
       errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
       p => protectionService.applyForProtection(nino, request.body.as[JsObject]) map { response =>
-        response.fold(
-          errors => BadRequest(Json.toJson(Error(message = "error transforming request: " + errors))),
-          validResult => Ok(validResult)
-        )
+        response.status match {
+          case OK if response.body.isSuccess => Ok(response.body.get)
+          case CONFLICT if response.body.isSuccess => Conflict(response.body.get)
+          case BAD_REQUEST if response.body.isSuccess =>  BadRequest(response.body.get)
+          case INTERNAL_SERVER_ERROR if response.body.isSuccess => InternalServerError(response.body.get)
+          case UNAUTHORIZED => Unauthorized(Json.toJson(Error("Request to NPS failed with status of Unauthorised")))
+          case _ if response.body.isSuccess=>  InternalServerError(response.body.get) // should not happen
+          case _ => InternalServerError(Json.toJson(Error("JSON error processing NPS request - HTTP status=" + response.status + ", error details: " + response.body.toString)))
+        }
       }
     )
   }

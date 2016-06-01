@@ -84,15 +84,16 @@ object Transformers {
     def copyToTopLevelIfExists(fieldName: String) = copyToTopLevel(fieldName) orElse Reads.pure(Json.obj())
 
     def copyProtectionDetailsToTopLevel: Reads[JsObject] =
-      ( copyToTopLevelIfExists("id") and
+      ( copyToTopLevelIfExists("id") andThen renameIfExists("id","protectionID") and
         copyToTopLevelIfExists("version") and
         (copyToTopLevel("type") andThen rename("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
         (copyToTopLevelIfExists("status") andThen int2StringIfExists("status", protectionStatuses)) and
         copyToTopLevelIfExists("relevantAmount") and
         copyToTopLevelIfExists("preADayPensionInPayment") and
+        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE", "postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("nonUKRights") and
-        copyToTopLevelIfExists("notificationID") and
+        (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
         copyToTopLevelIfExists("protectionReference")  reduce)
 
     def readCertificateDateOpt = (__ \ "protection" \ "certificateDate").readNullable[String]
