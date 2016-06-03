@@ -33,7 +33,7 @@ object TransformSpec {
 
   import model.ProtectionApplication
 
-  val fp2016RApplicationRequestBody=Json.toJson(ProtectionApplication(
+  val fp2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
     protectionType = "FP2016"
   )).as[JsObject]
 
@@ -74,7 +74,16 @@ object TransformSpec {
       |  }
     """.stripMargin).as[JsObject]
 
+  val ip2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
+    protectionType = "IP2016",
+    postADayBenefitCrystallisationEvents = Some(100000.00),
+    preADayPensionInPayment = Some(100000.00),
+    uncrystallisedRights = Some(200000.00),
+    nonUKRights = Some(800000.00),
+    relevantAmount = Some(1200000.00)
+  )).as[JsObject]
 }
+
 class TransformSpec extends UnitSpec{
 
   import Transformers._
@@ -82,7 +91,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid received FP2016 protection application request" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, fp2016RApplicationRequestBody)
+      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, fp2016ApplicationRequestBody)
       val topLevelFields=npsRequestBody.get.value
       topLevelFields.size shouldBe 2
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
@@ -111,7 +120,7 @@ class TransformSpec extends UnitSpec{
     }
   }
 
-  "A valid DES response to an unsuccessful IP2016 Create Lifetime Allowance request" should {
+  "A valid NPS response to an unsuccessful IP2016 Create Lifetime Allowance request" should {
     "transform to a unsuccessful but valid FP2016 application response body for the original MDTP client request" in {
       val responseBody = transformApplyResponseBody(testNinoSuffixChar.get, unsuccessfulCreateFP2016NPSResponseBody)
       println(responseBody)
@@ -122,6 +131,26 @@ class TransformSpec extends UnitSpec{
       topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
       topLevelFields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       topLevelFields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
+    }
+  }
+
+  "A valid received IP2016 protection application request" should {
+    "transform to a valid NPS Create Lifetime Allowance request body" in {
+      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, ip2016ApplicationRequestBody)
+      println("==> " + npsRequestBody)
+      val npsTopLevelFields=npsRequestBody.get.value
+      npsTopLevelFields.size shouldBe 2
+      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
+      val protection=npsTopLevelFields.get("protection")
+      protection.isDefined shouldBe true
+      val protectionFields = protection.get.as[JsObject].value
+      protectionFields.size shouldBe 6
+      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
+      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
+      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
+      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
     }
   }
 }
