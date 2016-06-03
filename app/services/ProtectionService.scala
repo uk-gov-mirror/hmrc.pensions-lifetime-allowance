@@ -17,11 +17,16 @@
 package services
 
 import connectors.NpsConnector
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject,JsResult, JsSuccess, JsError}
+import play.api.http.Status
+
 import uk.gov.hmrc.play.http.{HttpResponse, HeaderCarrier}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import util.{NinoHelper, Transformers}
+
+import model.HttpResponseDetails
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -31,13 +36,16 @@ trait ProtectionService {
 
   val nps: NpsConnector
 
-  def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsObject] = {
+  def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
 
-    // Call transformation util
-    nps.applyForProtection(nino, body)
-    // Call reverse transformation
-
-    // Map 200, 409 response
+    val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
+    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyRequestBody(ninoWithoutSuffix, applicationRequestBody)
+    npsRequestBody.fold(
+      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
+      req => nps.applyForProtection(nino, req) map { npsResponse =>
+        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformApplyResponseBody(lastNinoCharOpt.get, _) }
+        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+      }
+    )
   }
-
 }

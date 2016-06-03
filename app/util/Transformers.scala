@@ -35,6 +35,7 @@ object Transformers {
   private def renameIfExists(origName: String, newName: String): Reads[JsObject] =
     rename(origName, newName) orElse Reads.pure(Json.obj())
 
+  private def copyIfExists(name: String): Reads[JsObject] = renameIfExists(name,name)
 
   private def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsString].map(s => JsNumber(lookupTable.indexOf(s.value))))
@@ -61,33 +62,33 @@ object Transformers {
 
   /**
     * Transform an incoming MDTP API protection application request body Json to a request body for the corresponding
-    * outbound DES API Create Lifetime Allowance request
-    *
+    * outbound NPS API request
     * @param ninoWithoutSuffix the NINO with the suffix character dropped, as per DES API requirements
     * @param mdtpApplicationJson the incoming protecion applicaion request body
     * @return
     */
-  def mdtpApplicationToDesCreatePLARequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
+  def transformApplyRequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
 
-    val moveFieldsToProtectionObject=
-      (string2IntIfExists("protectionType", protectionTypes) andThen moveToProtection("protectionType", Some("type"))) and
-      moveToProtectionIfExists("preADayPensionInPayment") and
-      moveToProtectionIfExists("postADayBenefitCrystallisationEvents", Some("postADayBCE")) and
-      moveToProtectionIfExists("nonUKRights") and
-      moveToProtectionIfExists("uncrystallisedRights") and
-      moveToProtectionIfExists("relevantAmount") reduce
+    val npsProtectionFromApplication =
+      ((rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
+        renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and 
+        copyIfExists("preADayPensionInPayment") and
+        copyIfExists("uncrystallisedRights") and
+        copyIfExists("nonUKRights") and
+        copyIfExists("relevantAmount") reduce)
 
-
-    val mdtpApplicationToDesRequestTransformer =
-      __.json.pickBranch((
-           __ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
-          moveFieldsToProtectionObject reduce)
-
-      mdtpApplicationJson.transform(mdtpApplicationToDesRequestTransformer)
+    val npsRequestBodyFromNPSProtection = __.json.pickBranch(
+      (__ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
+        (__ \ 'protection).json.copyFrom((__).json.pick) reduce
+    )
+    for (
+      npsProtectionJson <- mdtpApplicationJson.transform(npsProtectionFromApplication);
+      npsRequestBody <- npsProtectionJson.transform(npsRequestBodyFromNPSProtection)
+    ) yield npsRequestBody
   }
 
   /**
-    * Transform a received DES Create API response body into the MDTP API equivalent to be returned to the client of this
+    * Transform a received NPS response body into that to be returned to the client of this
     * service.
     *
     * @param ninoSuffix the last character of the NINO associated with the request - needs to be appended to the
@@ -96,23 +97,24 @@ object Transformers {
     * @return a Json body for return to the MDTP service client.
     */
 
-  def desCreatePLAResponseBodyToMdtpProtection(ninoSuffix: Char, desResponseJson: JsObject): JsResult[JsObject] = {
+  def transformApplyResponseBody(ninoSuffix: Char, desResponseJson: JsObject): JsResult[JsObject] = {
 
     def copyToTopLevel(fieldName: String): Reads[JsObject] =
       (__ \ fieldName).json.copyFrom((__ \ "protection" \ fieldName).json.pick)
     def copyToTopLevelIfExists(fieldName: String) = copyToTopLevel(fieldName) orElse Reads.pure(Json.obj())
 
     def copyProtectionDetailsToTopLevel: Reads[JsObject] =
-      ( copyToTopLevelIfExists("id") and
+      ( copyToTopLevelIfExists("id") andThen renameIfExists("id","protectionID") and
         copyToTopLevelIfExists("version") and
         (copyToTopLevel("type") andThen rename("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
         (copyToTopLevelIfExists("status") andThen int2StringIfExists("status", protectionStatuses)) and
         copyToTopLevelIfExists("relevantAmount") and
         (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("preADayPensionInPayment") and
+        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE", "postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("nonUKRights") and
-        copyToTopLevelIfExists("notificationID") and
+        (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
         copyToTopLevelIfExists("protectionReference")  reduce)
 
     def readCertificateDateOpt = (__ \ "protection" \ "certificateDate").readNullable[String]
