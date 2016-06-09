@@ -21,9 +21,10 @@ import java.util.Random
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.http.HttpResponse
+import uk.gov.hmrc.play.http.{HeaderCarrier,HttpResponse}
 import config.WSHttp
 import uk.gov.hmrc.domain.Generator
+
 
 class NPSConnectorSpec extends UnitSpec{
 
@@ -42,10 +43,12 @@ class NPSConnectorSpec extends UnitSpec{
   val testNino = randomNino
   val (testNinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(testNino)
 
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
   "The NPS connector implicit header carrier  " should {
     "should have the environment and authorisation headers set" in {
-      testNPSConnector.hc.extraHeaders.find(_._1 == "Environment").isDefined shouldBe true
-      testNPSConnector.hc.extraHeaders.find(_._1 == "Authorization").isDefined shouldBe true
+      testNPSConnector.addExtraHeaders.headers.find(_._1 == "Environment").isDefined shouldBe true
+      testNPSConnector.addExtraHeaders.headers.find(_._1 == "Authorization").isDefined shouldBe true
     }
   }
 

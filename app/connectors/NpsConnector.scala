@@ -43,8 +43,8 @@ trait NpsConnector {
   val serviceAccessToken: String
   val serviceEnvironment: String
 
-  // add addtional headers
-  implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders(
+  // add addtional headers for the NPS request
+  def addExtraHeaders(implicit hc: HeaderCarrier): HeaderCarrier = hc.withExtraHeaders(
     "Accept" -> "application/vnd.hmrc.1.0+json",
     "Content-Type" -> "application/json",
     "Authorization" -> s"Bearer $serviceAccessToken",
@@ -61,7 +61,7 @@ trait NpsConnector {
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getUrl(nino)
-    val responseFut = post(requestUrl, body)
+    val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut.map { response => HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
   }
