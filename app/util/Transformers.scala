@@ -43,22 +43,8 @@ object Transformers {
   private def int2String(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsNumber].map(n => JsString(lookupTable(n.value.toInt))))
 
-  private def string2IntIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
-    string2Int(fieldName, lookupTable) orElse Reads.pure(Json.obj())
-
   private def int2StringIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     int2String(fieldName, lookupTable) orElse Reads.pure(Json.obj())
-
-  private def moveToProtection(fieldName: String, newFieldName:Option[String] = None) =
-    (__ \ "protection" \ newFieldName.getOrElse(fieldName)).json.copyFrom((__ \ fieldName).json.pick) andThen
-      (__ \ fieldName).json.prune
-
-  private def moveToProtectionIfExists(fieldName: String, newFieldName:Option[String] = None) =
-    ((__ \ "protection" \ newFieldName.getOrElse(fieldName)).json.copyFrom((__ \ fieldName).json.pick)
-        orElse Reads.pure(Json.obj()
-    ) andThen (__ \ fieldName).json.prune)
-
-  private def remove(fieldName: String) = (__ \ fieldName).json.prune
 
   /**
     * Transform an incoming MDTP API protection application request body Json to a request body for the corresponding

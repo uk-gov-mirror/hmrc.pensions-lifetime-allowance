@@ -16,8 +16,8 @@
 
 package connectors
 
+import util.NinoHelper
 import config.WSHttp
-import util.ResponseHandler
 import play.api.libs.json._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
@@ -37,47 +37,41 @@ object NpsConnector extends NpsConnector with ServicesConfig {
 }
 trait NpsConnector {
 
-  // add addtional headers
-  implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders("Accept" -> "application/vnd.hmrc.1.0+json", "Content-Type" -> "application/json")
   def http: HttpGet with HttpPost with HttpPut
   val serviceUrl: String
-  def url(path: String): String = s"$serviceUrl$path"
-  private def ninoWithoutSuffix(nino: String): String = nino.substring(0, 8)
 
   val serviceAccessToken: String
   val serviceEnvironment: String
+
+  // add addtional headers
+  implicit val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders(
+    "Accept" -> "application/vnd.hmrc.1.0+json",
+    "Content-Type" -> "application/json",
+    "Authorization" -> s"Bearer $serviceAccessToken",
+    "Environment" -> serviceEnvironment)
+
+  def getUrl(nino: String): String = {
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
+  }
 
   implicit val readApiResponse: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
     def read(method: String, url: String, response: HttpResponse) = NpsResponseHandler.handleNpsResponse(method, url, response)
   }
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
-    val requestUrl = url(  s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix(nino)}/protection")
-//    val requestJson: JsValue = Json.parse("""{"protectionType":1}""")
+    val requestUrl = getUrl(nino)
+    val responseFut = post(requestUrl, body)
 
-    val responseFut = post(requestUrl, body, hc)
-
-    responseFut.map { response =>
-      HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject]))
-    }
+    responseFut.map { response => HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
   }
 
-  def npsRequestHeaderCarrier(hc: HeaderCarrier): HeaderCarrier = {
-    (HeaderCarrier())
-      .withExtraHeaders("Authorization" -> s"Bearer $serviceAccessToken")
-      .withExtraHeaders("Environment" -> serviceEnvironment)
-  }
-
-  def post(requestUrl: String, body: JsValue, hc: HeaderCarrier)(implicit ec: ExecutionContext): Future[HttpResponse] = {
-    implicit val npsHC = npsRequestHeaderCarrier(hc)
+  def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     http.POST[JsValue, HttpResponse](requestUrl, body)
   }
-
 }
 
-object NpsResponseHandler extends NpsResponseHandler{
-
-}
+object NpsResponseHandler extends NpsResponseHandler
 
 trait NpsResponseHandler extends HttpErrorFunctions {
   def handleNpsResponse(method: String, url: String, response: HttpResponse): HttpResponse = {

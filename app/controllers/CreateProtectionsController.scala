@@ -16,7 +16,7 @@
 
 package controllers
 
-import model.{Protection, ProtectionApplication}
+import model.ProtectionApplication
 import play.api.mvc._
 import play.api.http.Status
 import services.ProtectionService
@@ -29,7 +29,6 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object CreateProtectionsController extends CreateProtectionsController {
-
   override val protectionService = ProtectionService
 }
 
@@ -45,12 +44,24 @@ trait CreateProtectionsController extends BaseController {
       p => protectionService.applyForProtection(nino, request.body.as[JsObject]) map { response =>
         response.status match {
           case OK if response.body.isSuccess => Ok(response.body.get)
-          case CONFLICT if response.body.isSuccess => Conflict(response.body.get)
-          case BAD_REQUEST if response.body.isSuccess =>  BadRequest(response.body.get)
-          case INTERNAL_SERVER_ERROR if response.body.isSuccess => InternalServerError(response.body.get)
-          case UNAUTHORIZED => Unauthorized(Json.toJson(Error("Request to NPS failed with status of Unauthorised")))
-          case _ if response.body.isSuccess=>  InternalServerError(response.body.get) // should not happen
-          case _ => InternalServerError(Json.toJson(Error("JSON error processing NPS request - HTTP status=" + response.status + ", error details: " + response.body.toString)))
+          case CONFLICT if response.body.isSuccess => Conflict(response.body.get) // this is a normal/expected response
+          case _ => {
+            //  error response handling
+            val responseErrorDetails = if (!response.body.isSuccess) {
+              ", but unable to parse the NPS response body"
+            } else {
+              ", body=" + Json.asciiStringify(response.body.get)
+            }
+            val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
+            response.status match {
+              case OK => InternalServerError(error)
+              case BAD_REQUEST => BadRequest(error)
+              case INTERNAL_SERVER_ERROR => InternalServerError(error)
+              case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
+              case UNAUTHORIZED => Unauthorized(error)
+              case _ => InternalServerError(error)
+            }
+          }
         }
       }
     )
