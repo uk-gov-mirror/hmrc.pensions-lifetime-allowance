@@ -18,7 +18,11 @@ package connectors
 
 import util.NinoHelper
 import config.WSHttp
+import config.MicroserviceAuditConnector
+
+import events.NPSCreateLTAEvent
 import play.api.libs.json._
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
 import model.HttpResponseDetails
@@ -29,6 +33,8 @@ object NpsConnector extends NpsConnector with ServicesConfig {
 
   override val serviceUrl = baseUrl("nps")
   override def http = WSHttp
+
+  override val audit = MicroserviceAuditConnector
 
   override val serviceAccessToken = getConfString("nps.accessToken", "")
   override val serviceEnvironment = getConfString("nps.environment", "")
@@ -42,6 +48,8 @@ trait NpsConnector {
 
   val serviceAccessToken: String
   val serviceEnvironment: String
+
+  val audit: AuditConnector
 
   // add addtional headers for the NPS request
   def addExtraHeaders(implicit hc: HeaderCarrier): HeaderCarrier = hc.withExtraHeaders(
@@ -63,7 +71,10 @@ trait NpsConnector {
     val requestUrl = getUrl(nino)
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    responseFut.map { response => HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
+    responseFut.map { response =>
+      val createLTAEvent = NPSCreateLTAEvent(requestUrl, nino, body.value.toString, response.body)
+      audit.sendEvent(createLTAEvent)
+      HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
   }
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

@@ -21,19 +21,22 @@ import java.util.Random
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.http.{HeaderCarrier,HttpResponse}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import config.WSHttp
 import uk.gov.hmrc.domain.Generator
+import org.scalatest.mock.MockitoSugar
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 
-class NPSConnectorSpec extends UnitSpec{
+class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
   object testNPSConnector extends NpsConnector {
     override val serviceUrl = "http://localhost:80"
     override def http = WSHttp
-
     override val serviceAccessToken = "token"
     override val serviceEnvironment = "environment"
+
+    override val audit : AuditConnector = mock[AuditConnector]
   }
 
   val rand = new Random()
