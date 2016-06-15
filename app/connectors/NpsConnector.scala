@@ -71,10 +71,16 @@ trait NpsConnector {
     val requestUrl = getUrl(nino)
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    responseFut.map { response =>
-      val createLTAEvent = NPSCreateLTAEvent(requestUrl, nino, body.value.toString, response.body)
-      audit.sendEvent(createLTAEvent)
-      HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
+    responseFut map { expectedResponse =>
+      handleExpectedApplyResponse(requestUrl,nino,body,expectedResponse)
+    }
+  }
+
+  def handleExpectedApplyResponse(requestUrl: String, nino: String, requestBody: JsObject, response: HttpResponse)
+                                    (implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+    val createLTAEvent = NPSCreateLTAEvent(requestUrl, nino, requestBody.value.toString, response.json.toString)
+    audit.sendEvent(createLTAEvent)
+    HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject]))
   }
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

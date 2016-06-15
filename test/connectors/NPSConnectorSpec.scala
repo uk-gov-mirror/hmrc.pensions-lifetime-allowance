@@ -27,6 +27,7 @@ import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
@@ -55,14 +56,14 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  "The  NPS Conector response handler" should {
+  "The  NPS Connector response handler" should {
     "handle 409 responses as successes and pass the status back unmodifed" in {
       val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(409))
       handledHttpResponse.status shouldBe 409
     }
   }
 
-  "The  NPS Connector response handler" should {
+  "The NPS Connector response handler" should {
     "handle non-OK responses other than 409 as failures and throw an exception" in {
       try {
         val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(400))
@@ -73,9 +74,37 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  "The NPS COnnector getUrl method" should {
+  "The NPS Connector getUrl method" should {
     "return a  URL that contains the nino passed to it" in {
       testNPSConnector.getUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
+    }
+  }
+
+  "The NPS Connector handleExpectedApplyResponse" should {
+    "return a HTTPResponseDetails object with valid fields" in {
+      val requestStr =
+        """
+          |{
+          | "nino": "AA123456",
+          | "protection": {
+          |   "type": 1
+          |   }
+          | }
+        """.stripMargin
+      val requestBody = Json.parse(requestStr).as[JsObject]
+      val responseStr =
+        """
+          {
+          |"nino": "AA123456",
+          | "protection": {
+          |   "type": 1
+          |  }
+          |}
+        """.stripMargin
+      val responseBody = Json.parse(requestStr).as[JsObject]
+      val responseDetails = testNPSConnector.handleExpectedApplyResponse("http://localhost:80/path",testNino,requestBody,HttpResponse(200, Some((responseBody))))
+      responseDetails.status shouldBe 200
+      responseDetails.body.isSuccess shouldBe true
     }
   }
 }
