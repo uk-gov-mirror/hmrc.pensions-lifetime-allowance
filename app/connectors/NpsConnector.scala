@@ -26,6 +26,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
 import model.HttpResponseDetails
+import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -69,17 +70,24 @@ trait NpsConnector {
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getUrl(nino)
+    val requestTime = DateTimeUtils.now
+
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { expectedResponse =>
-      handleExpectedApplyResponse(requestUrl,nino,body,expectedResponse)
+      handleExpectedApplyResponse(requestUrl,nino,requestTime, body,expectedResponse)
     }
   }
 
-  def handleExpectedApplyResponse(requestUrl: String, nino: String, requestBody: JsObject, response: HttpResponse)
-                                    (implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
-    val createLTAEvent = NPSCreateLTAEvent(requestUrl, nino, requestBody.value.toString, response.json.toString)
-    audit.sendEvent(createLTAEvent)
+  def handleExpectedApplyResponse(
+      requestUrl: String,
+      nino: String,
+      requestTime: org.joda.time.DateTime,
+      requestBody: JsObject,
+      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+
+    val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, response.json.as[JsObject], response.status)
+    audit.sendMergedEvent(createLTAEvent)
     HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject]))
   }
 

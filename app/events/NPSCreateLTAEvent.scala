@@ -17,32 +17,50 @@
 package events
 
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.play.audit.model.DataEvent
+import uk.gov.hmrc.play.audit.model.{MergedDataEvent, DataCall}
 import uk.gov.hmrc.play.audit.EventTypes
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http._
+import play.api.libs.json.{JsObject, JsPath}
+import uk.gov.hmrc.time.DateTimeUtils
 
-class NPSCreateLTAEvent(nino: String,
-                        path: String,
-                        requestBody: String,
-                        responseBody: String)(implicit hc: HeaderCarrier)
-  extends DataEvent(
+class NPSCreateLTAEvent(npsRequestDataCall: DataCall, npsResponseDataCall: DataCall)(implicit hc: HeaderCarrier)
+  extends MergedDataEvent(
     auditSource = "pla",
     auditType = EventTypes.OutboundCall,
-    tags = hc.toAuditTags("CreateLTAProtection",path),
-    detail = hc.toAuditDetails()  ++ Map(
-      "nino" -> nino,
-      "requestBody" -> requestBody.toString,
-      "responseBody" -> responseBody.toString
-    )
-  )
+    request = npsRequestDataCall,
+    response = npsResponseDataCall)
 
 object NPSCreateLTAEvent {
   def apply(nino: String,
-            path: String,
-            requestBody: String,
-            responseBody: String)(implicit hc: HeaderCarrier) =
+            requestUrl: String,
+            requestTime: org.joda.time.DateTime,
+            npsRequestBody: JsObject,
+            npsResponseBody: JsObject,
+            status: Int)(implicit hc: HeaderCarrier) =
   {
-      new NPSCreateLTAEvent(nino,path,requestBody,responseBody)
+    val responseTime = DateTimeUtils.now
+
+    val requestDetails = Seq(
+      "nino" -> nino,
+      "requestBody" -> npsRequestBody.value.toString
+    )
+    val requestDataCall = DataCall(
+      hc.toAuditTags("CreateLTA", requestUrl),
+      hc.toAuditDetails(requestDetails: _*),
+      requestTime)
+
+    val responseDetails = Map(
+      "responseBody" -> npsResponseBody.value.toString,
+      "status" -> status.toString
+    )
+    val responseDataCall = DataCall(
+      Map.empty,
+      responseDetails,
+      responseTime
+    )
+
+    new NPSCreateLTAEvent(requestDataCall, responseDataCall)
   }
 }

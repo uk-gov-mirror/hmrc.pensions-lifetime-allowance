@@ -22,10 +22,12 @@ import util._
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc
 import config.WSHttp
 import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -102,7 +104,12 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
           |}
         """.stripMargin
       val responseBody = Json.parse(requestStr).as[JsObject]
-      val responseDetails = testNPSConnector.handleExpectedApplyResponse("http://localhost:80/path",testNino,requestBody,HttpResponse(200, Some((responseBody))))
+      val responseDetails = testNPSConnector.handleExpectedApplyResponse(
+        "http://localhost:80/path",
+        testNino,
+        DateTimeUtils.now,
+        requestBody,
+        HttpResponse(200, Some((responseBody))))
       responseDetails.status shouldBe 200
       responseDetails.body.isSuccess shouldBe true
     }
