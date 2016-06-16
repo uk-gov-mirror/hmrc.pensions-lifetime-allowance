@@ -25,6 +25,8 @@ import play.api.libs.json._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
+import uk.gov.hmrc.play.http.logging.Authorization
+
 import model.HttpResponseDetails
 import uk.gov.hmrc.time.DateTimeUtils
 
@@ -56,9 +58,9 @@ trait NpsConnector {
   def addExtraHeaders(implicit hc: HeaderCarrier): HeaderCarrier = hc.withExtraHeaders(
     "Accept" -> "application/vnd.hmrc.1.0+json",
     "Content-Type" -> "application/json",
-    "Authorization" -> s"Bearer $serviceAccessToken",
-    "Environment" -> serviceEnvironment)
-
+    //"Authorization" -> s"Bearer $serviceAccessToken",
+    "Environment" -> serviceEnvironment).copy(authorization = Some(Authorization(s"Bearer $serviceAccessToken")))
+  
   def getUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
