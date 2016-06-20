@@ -19,3 +19,4 @@ package model
 import play.api.libs.json._
 
 case class HttpResponseDetails(status: Int, body: JsResult[JsObject])
+

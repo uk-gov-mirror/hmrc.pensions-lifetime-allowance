@@ -18,12 +18,17 @@ package connectors
 
 import util.NinoHelper
 import config.WSHttp
+import config.MicroserviceAuditConnector
+
+import events.NPSCreateLTAEvent
 import play.api.libs.json._
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
 import uk.gov.hmrc.play.http.logging.Authorization
 
 import model.HttpResponseDetails
+import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,6 +36,8 @@ object NpsConnector extends NpsConnector with ServicesConfig {
 
   override val serviceUrl = baseUrl("nps")
   override def http = WSHttp
+
+  override val audit = MicroserviceAuditConnector
 
   override val serviceAccessToken = getConfString("nps.accessToken", "")
   override val serviceEnvironment = getConfString("nps.environment", "")
@@ -44,6 +51,8 @@ trait NpsConnector {
 
   val serviceAccessToken: String
   val serviceEnvironment: String
+
+  val audit: AuditConnector
 
   // add addtional headers for the NPS request
   def addExtraHeaders(implicit hc: HeaderCarrier): HeaderCarrier = hc.withExtraHeaders(
@@ -63,9 +72,25 @@ trait NpsConnector {
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getUrl(nino)
+    val requestTime = DateTimeUtils.now
+
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    responseFut.map { response => HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject])) }
+    responseFut map { expectedResponse =>
+      handleExpectedApplyResponse(requestUrl,nino,requestTime, body,expectedResponse)
+    }
+  }
+
+  def handleExpectedApplyResponse(
+      requestUrl: String,
+      nino: String,
+      requestTime: org.joda.time.DateTime,
+      requestBody: JsObject,
+      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+
+    val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, response.json.as[JsObject], response.status)
+    audit.sendMergedEvent(createLTAEvent)
+    HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject]))
   }
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

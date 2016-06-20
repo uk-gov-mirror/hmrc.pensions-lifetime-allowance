@@ -17,16 +17,17 @@
 package services
 
 import connectors.NpsConnector
-import play.api.libs.json.{JsObject,JsResult, JsSuccess, JsError}
+import config.MicroserviceAuditConnector
+import events.NPSCreateLTAEvent
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import play.api.http.Status
 
-import uk.gov.hmrc.play.http.{HttpResponse, HeaderCarrier}
-
 import scala.concurrent.{ExecutionContext, Future}
-
 import util.{NinoHelper, Transformers}
-
 import model.HttpResponseDetails
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -37,7 +38,6 @@ trait ProtectionService {
   val nps: NpsConnector
 
   def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
-
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
     val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyRequestBody(ninoWithoutSuffix, applicationRequestBody)
     npsRequestBody.fold(

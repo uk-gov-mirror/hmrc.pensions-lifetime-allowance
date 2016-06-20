@@ -21,19 +21,25 @@ import java.util.Random
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.http.{HeaderCarrier,HttpResponse}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc
 import config.WSHttp
 import uk.gov.hmrc.domain.Generator
+import org.scalatest.mock.MockitoSugar
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.time.DateTimeUtils
 
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class NPSConnectorSpec extends UnitSpec{
+class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
   object testNPSConnector extends NpsConnector {
     override val serviceUrl = "http://localhost:80"
     override def http = WSHttp
-
     override val serviceAccessToken = "token"
     override val serviceEnvironment = "environment"
+
+    override val audit : AuditConnector = mock[AuditConnector]
   }
 
   val rand = new Random()
@@ -52,14 +58,14 @@ class NPSConnectorSpec extends UnitSpec{
     }
   }
 
-  "The  NPS Conector response handler" should {
+  "The  NPS Connector response handler" should {
     "handle 409 responses as successes and pass the status back unmodifed" in {
       val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(409))
       handledHttpResponse.status shouldBe 409
     }
   }
 
-  "The  NPS Connector response handler" should {
+  "The NPS Connector response handler" should {
     "handle non-OK responses other than 409 as failures and throw an exception" in {
       try {
         val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(400))
@@ -70,9 +76,42 @@ class NPSConnectorSpec extends UnitSpec{
     }
   }
 
-  "The NPS COnnector getUrl method" should {
+  "The NPS Connector getUrl method" should {
     "return a  URL that contains the nino passed to it" in {
       testNPSConnector.getUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
+    }
+  }
+
+  "The NPS Connector handleExpectedApplyResponse" should {
+    "return a HTTPResponseDetails object with valid fields" in {
+      val requestStr =
+        """
+          |{
+          | "nino": "AA123456",
+          | "protection": {
+          |   "type": 1
+          |   }
+          | }
+        """.stripMargin
+      val requestBody = Json.parse(requestStr).as[JsObject]
+      val responseStr =
+        """
+          {
+          |"nino": "AA123456",
+          | "protection": {
+          |   "type": 1
+          |  }
+          |}
+        """.stripMargin
+      val responseBody = Json.parse(requestStr).as[JsObject]
+      val responseDetails = testNPSConnector.handleExpectedApplyResponse(
+        "http://localhost:80/path",
+        testNino,
+        DateTimeUtils.now,
+        requestBody,
+        HttpResponse(200, Some((responseBody))))
+      responseDetails.status shouldBe 200
+      responseDetails.body.isSuccess shouldBe true
     }
   }
 }
