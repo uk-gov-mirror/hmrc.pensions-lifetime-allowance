@@ -49,11 +49,29 @@ object Transformers {
   /**
     * Transform an incoming MDTP API protection application request body Json to a request body for the corresponding
     * outbound NPS API request
+    *
     * @param ninoWithoutSuffix the NINO with the suffix character dropped, as per DES API requirements
-    * @param mdtpApplicationJson the incoming protecion applicaion request body
+    * @param mdtpApplicationJson the incoming protecion application request body
     * @return
     */
   def transformApplyRequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
+
+    // arrays are tricky to deal with using json transformers - converting to an intermediate model makes it easier
+    def readPensionDetails = (__ \ "pensionDebits").readNullable[List[model.PensionDebit]]
+    val applicationPensionDetails = mdtpApplicationJson.validate[Option[List[model.PensionDebit]]](readPensionDetails)
+
+    val npsPensionDetails = applicationPensionDetails.fold(
+      errors => throw new Exception("Unable to parse pension debits. " + errors),
+      pensionDebitsOpt => pensionDebitsOpt map { pdList =>
+          JsArray(pdList.map {
+            pd => Json.obj("pensionDebitStartDate" -> pd.startDate,"pensionDebitEnteredAmount" -> pd.amount)
+          })
+      }
+    )
+
+    val putPensionDebitsIfExist: Reads[JsObject] = npsPensionDetails.map { pdArray =>
+      (__ \ "pensionDebits").json.put { pdArray }
+    } getOrElse { Reads.pure(Json.obj()) }
 
     val npsProtectionFromApplication =
       ((rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
@@ -63,14 +81,17 @@ object Transformers {
         copyIfExists("nonUKRights") and
         copyIfExists("relevantAmount") reduce)
 
-    val npsRequestBodyFromNPSProtection = __.json.pickBranch(
+    // following builds NPS request with nino and protecion object, but wothout pension debits
+    val insertNinoAndProtectionObject = __.json.pickBranch(
       (__ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
-        (__ \ 'protection).json.copyFrom((__).json.pick) reduce
+      (__ \ 'protection).json.copyFrom((__).json.pick) reduce
     )
-    for (
-      npsProtectionJson <- mdtpApplicationJson.transform(npsProtectionFromApplication);
-      npsRequestBody <- npsProtectionJson.transform(npsRequestBodyFromNPSProtection)
-    ) yield npsRequestBody
+
+    val npsRequestFromApplication =
+      (putPensionDebitsIfExist and
+      (npsProtectionFromApplication andThen insertNinoAndProtectionObject) reduce)
+
+    mdtpApplicationJson.transform(npsRequestFromApplication)
   }
 
   /**

@@ -31,7 +31,7 @@ object TransformSpec {
   val ninoGenerator = new Generator(rand)
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  import model.ProtectionApplication
+  import model.{ProtectionApplication, PensionDebit}
 
   val fp2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
     protectionType = "FP2016"
@@ -80,6 +80,16 @@ object TransformSpec {
     preADayPensionInPayment = Some(100000.00),
     uncrystallisedRights = Some(200000.00),
     nonUKRights = Some(800000.00),
+    relevantAmount = Some(1200000.00)
+  )).as[JsObject]
+
+  val ip2016ApplicationRequestWithPensionDebitsBody=Json.toJson(ProtectionApplication(
+    protectionType = "IP2016",
+    postADayBenefitCrystallisationEvents = Some(100000.00),
+    preADayPensionInPayment = Some(100000.00),
+    uncrystallisedRights = Some(200000.00),
+    nonUKRights = Some(800000.00),
+    pensionDebits = Some(List(PensionDebit("2016-6-29", 4000.00),PensionDebit("2016-4-1", 623000.00))),
     relevantAmount = Some(1200000.00)
   )).as[JsObject]
 }
@@ -151,6 +161,37 @@ class TransformSpec extends UnitSpec{
       protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
       protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
       protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
+    }
+  }
+  "A valid received IP2016 protection application request with pension debits" should {
+    "transform to a valid NPS Create Lifetime Allowance request body" in {
+      println("Input ==> " + ip2016ApplicationRequestWithPensionDebitsBody )
+      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, ip2016ApplicationRequestWithPensionDebitsBody)
+      println("Output ==> " + npsRequestBody)
+      val npsTopLevelFields=npsRequestBody.get.value
+      npsTopLevelFields.size shouldBe 3
+      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
+      val protection=npsTopLevelFields.get("protection")
+      protection.isDefined shouldBe true
+      val protectionFields = protection.get.as[JsObject].value
+      protectionFields.size shouldBe 6
+      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
+      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
+      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
+      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
+
+      // check penssion debits
+      val pd=npsTopLevelFields.get("pensionDebits")
+      val pdItems = pd.get.as[JsArray].value
+      pdItems.size shouldBe 2
+      val pd1 = pdItems(0).as[JsObject]
+      pd1.value.get("pensionDebitEnteredAmount").get.as[JsNumber].value.toFloat shouldEqual 4000.00
+      pd1.value.get("pensionDebitStartDate").get.as[JsString].value shouldBe "2016-6-29"
+      val pd2 = pdItems(1).as[JsObject]
+      pd2.value.get("pensionDebitEnteredAmount").get.as[JsNumber].value.toFloat shouldEqual 623000.00
+      pd2.value.get("pensionDebitStartDate").get.as[JsString].value shouldBe "2016-4-1"
     }
   }
 }
