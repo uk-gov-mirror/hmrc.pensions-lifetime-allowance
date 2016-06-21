@@ -56,17 +56,18 @@ object Transformers {
     */
   def transformApplyRequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
 
-    // arrays are tricky to deal with using json transformers - converting to an intermediate model makes it easier
-    def readPensionDetails = (__ \ "pensionDebits").readNullable[List[model.PensionDebit]]
-    val applicationPensionDetails = mdtpApplicationJson.validate[Option[List[model.PensionDebit]]](readPensionDetails)
+    def mdtpToNpsPensionDebit =
+      rename("amount", "pensionDebitEnteredAmount") and
+      rename("startDate", "pensionDebitStartDate") reduce
 
-    val npsPensionDetails = applicationPensionDetails.fold(
+    // arrays are tricky to manipulate in json transformers - reading them as a list and then
+    // transforming tach item is easier . Luckily our lists won't be very large so no performance concerns with this.
+    def readPensionDebitList = (__ \ "pensionDebits").readNullable[List[JsObject]]
+    val mdtpPensionDebits = mdtpApplicationJson.validate(readPensionDebitList)
+
+    val npsPensionDetails = mdtpPensionDebits.fold(
       errors => throw new Exception("Unable to parse pension debits. " + errors),
-      pensionDebitsOpt => pensionDebitsOpt map { pdList =>
-          JsArray(pdList.map {
-            pd => Json.obj("pensionDebitStartDate" -> pd.startDate,"pensionDebitEnteredAmount" -> pd.amount)
-          })
-      }
+      pdListOpt => pdListOpt map { pdList => JsArray(pdList map { _.transform(mdtpToNpsPensionDebit).get }) }
     )
 
     val putPensionDebitsIfExist: Reads[JsObject] = npsPensionDetails.map { pdArray =>
@@ -95,16 +96,16 @@ object Transformers {
   }
 
   /**
-    * Transform a received NPS response body into that to be returned to the client of this
+    * Transform a received NPS response for an Application into that to be returned to the client of this
     * service.
     *
     * @param ninoSuffix the last character of the NINO associated with the request - needs to be appended to the
     *                   NINO returned by the DES API
-    * @param desResponseJson the json body received from DES in response to a Create Lifetime Allowance request.
+    * @param npsResponseJson the json body received from NPS in response to a Create Lifetime Allowance request.
     * @return a Json body for return to the MDTP service client.
     */
 
-  def transformApplyResponseBody(ninoSuffix: Char, desResponseJson: JsObject): JsResult[JsObject] = {
+  def transformApplyResponseBody(ninoSuffix: Char, npsResponseJson: JsObject): JsResult[JsObject] = {
 
     def copyToTopLevel(fieldName: String): Reads[JsObject] =
       (__ \ fieldName).json.copyFrom((__ \ "protection" \ fieldName).json.pick)
@@ -118,20 +119,20 @@ object Transformers {
         copyToTopLevelIfExists("relevantAmount") and
         (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("preADayPensionInPayment") and
-        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE", "postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("nonUKRights") and
+        copyToTopLevelIfExists("protectedAmount") and
         (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
         copyToTopLevelIfExists("protectionReference")  reduce)
 
     def readCertificateDateOpt = (__ \ "protection" \ "certificateDate").readNullable[String]
     def readCertificateTimeOpt = (__ \ "protection" \ "certificateTime").readNullable[String]
 
-    // DES returns date and time in separate fields, but MDTP API requires a single ISOO601 date/time field.
-    // soo need to merge the DES data and time fields to create the full field for the MDTP API.
+    // NPS integration layer returns date and time in separate fields, but MDTP API requires a single ISOO601 date/time field.
+    // so need to merge the returned data and time fields to create the full field for the MDTP API.
     def iso8601CertDateOpt: Option[String] = {
-      val desCertDateJs = desResponseJson.validate[Option[String]](readCertificateDateOpt)
-      val desCertTimeJs = desResponseJson.validate[Option[String]](readCertificateTimeOpt)
+      val desCertDateJs = npsResponseJson.validate[Option[String]](readCertificateDateOpt)
+      val desCertTimeJs = npsResponseJson.validate[Option[String]](readCertificateTimeOpt)
       (desCertDateJs, desCertTimeJs) match {
         case (d: JsSuccess[Option[String]], t: JsSuccess[Option[String]]) if d.value.isDefined && t.value.isDefined =>
           Some(d.value.get + "T" + t.value.get)
@@ -153,6 +154,80 @@ object Transformers {
           orElse Reads.pure(Json.obj())
       ) reduce) andThen (__ \ "protection").json.prune
 
-    desResponseJson.transform(toMdtpProtection)
+    npsResponseJson.transform(toMdtpProtection)
+  }
+
+  /**
+    * Transform received response to Read Protections request from NPS into service response
+    *
+    */
+  def transformReadResponseBody(ninoSuffix: Char, npsResponseJson: JsObject): JsResult[JsObject] = {
+
+    def readCertificateDateOpt = (__ \ "certificateDate").readNullable[String]
+    def readCertificateTimeOpt = (__ \ "certificateTime").readNullable[String]
+
+    // NPS request mediator DES returns date and time in separate fields, but MDTP API requires a single
+    // ISOO601 date/time field.
+    // so need to merge the returned data and time fields to create the full field for the MDTP API.
+    def iso8601CertDateOpt(protectionJson: JsObject): Option[String] = {
+      val desCertDateJs = protectionJson.validate[Option[String]](readCertificateDateOpt)
+      val desCertTimeJs = protectionJson.validate[Option[String]](readCertificateTimeOpt)
+      (desCertDateJs, desCertTimeJs) match {
+        case (d: JsSuccess[Option[String]], t: JsSuccess[Option[String]]) if d.value.isDefined && t.value.isDefined =>
+          Some(d.value.get + "T" + t.value.get)
+        case (d: JsSuccess[Option[String]], _) if d.value.isDefined => Some(d.value.get)
+        case _ => None
+      }
+    }
+
+    def npsToMdtpProtectionWithoutCertDate =
+      rename("id", "protectionID") and
+      copyIfExists("version") and
+      (renameIfExists("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
+      (copyIfExists("status") andThen int2String("status", protectionStatuses)) and
+      copyIfExists("protectedAmount") and
+      copyIfExists("relevantAmount") and
+      (copyIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
+      copyIfExists("preADayPensionInPayment") and
+      copyIfExists("uncrystallisedRights") and
+      copyIfExists("nonUKRights") and
+      (copyIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
+      copyIfExists("protectionReference") reduce
+
+    def npsToMdtpProtection(npsProtection: JsObject) = {
+      val withoutCertDate = npsProtection.transform(npsToMdtpProtectionWithoutCertDate)
+      withoutCertDate.fold(
+        errors => throw new Exception("Failed to parse protection received from NPS. " + errors),
+        protection => {
+          val certificateDateOpt = iso8601CertDateOpt(npsProtection)
+          certificateDateOpt map { cdate => protection ++ Json.obj("certificateDate" -> cdate) } getOrElse protection
+        }
+      )
+    }
+
+    // arrays are tricky to manipulate in json transformers - reading them as a list and then
+    // transforming tach item is easier . Luckily our lists won't be very large so no performance concerns with this.
+    def readPProtectionList = (__ \ "protections").readNullable[List[JsObject]]
+    val npsProtectionList = npsResponseJson.validate(readPProtectionList)
+
+    val mdtpProtectionList = npsProtectionList.fold(
+      errors => throw new Exception("Unable to parse protection list. " + errors),
+      protListOpt => protListOpt map { protList =>
+        JsArray(protList map { protJsObj =>
+          npsToMdtpProtection(protJsObj)}
+        )
+      }
+    )
+
+    val putProtectionsIfExist: Reads[JsObject] = mdtpProtectionList.map { protArray =>
+      (__ \ "protections").json.put { protArray }
+    } getOrElse { Reads.pure(Json.obj()) }
+
+    val toMdtpResponse =
+      ((__ \ 'nino).json.update(of[JsString].map { case JsString(s) => JsString(s + ninoSuffix) }) and
+      renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference")  and
+      putProtectionsIfExist reduce)
+
+    npsResponseJson.transform(toMdtpResponse)
   }
 }
