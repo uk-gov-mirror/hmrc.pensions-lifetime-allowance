@@ -85,9 +85,9 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
   "The NPS Connector handleExpectedApplyResponse" should {
     "return a HTTPResponseDetails object with valid fields" in {
       val requestStr =
-        """
+        s"""
           |{
-          | "nino": "AA123456",
+          | "nino": "${testNinoWithoutSuffix}",
           | "protection": {
           |   "type": 1
           |   }
@@ -95,9 +95,9 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
         """.stripMargin
       val requestBody = Json.parse(requestStr).as[JsObject]
       val responseStr =
-        """
+        s"""
           {
-          |"nino": "AA123456",
+          |"nino": "${testNinoWithoutSuffix}",
           | "protection": {
           |   "type": 1
           |  }
