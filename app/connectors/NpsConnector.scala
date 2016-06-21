@@ -19,15 +19,17 @@ package connectors
 import util.NinoHelper
 import config.WSHttp
 import config.MicroserviceAuditConnector
-
 import events.NPSCreateLTAEvent
+import model.{Error,HttpResponseDetails}
+
 import play.api.libs.json._
+import play.api.{LoggerLike, Logger}
+
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
 import uk.gov.hmrc.play.http.logging.Authorization
 
-import model.HttpResponseDetails
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +43,6 @@ object NpsConnector extends NpsConnector with ServicesConfig {
 
   override val serviceAccessToken = getConfString("nps.accessToken", "")
   override val serviceEnvironment = getConfString("nps.environment", "")
-
 
 }
 trait NpsConnector {
@@ -88,9 +89,21 @@ trait NpsConnector {
       requestBody: JsObject,
       response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
 
-    val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, response.json.as[JsObject], response.status)
+    val responseBody  = response.json.as[JsObject]
+    val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, responseBody, response.status)
+    // Logger.debug(s"Sending audit event: $createLTAEvent")
     audit.sendMergedEvent(createLTAEvent)
-    HttpResponseDetails(response.status, JsSuccess(response.json.as[JsObject]))
+    // assertion: nino returned in response must be the same as that sent in the request
+    val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    if (responseNino==ninoWithoutSuffix) {
+      HttpResponseDetails(response.status, JsSuccess(responseBody))
+    }
+    else {
+      val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
+      Logger.error(report)
+      HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
+    }
   }
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
