@@ -62,9 +62,14 @@ trait NpsConnector {
     //"Authorization" -> s"Bearer $serviceAccessToken",
     "Environment" -> serviceEnvironment).copy(authorization = Some(Authorization(s"Bearer $serviceAccessToken")))
   
-  def getUrl(nino: String): String = {
+  def getApplyUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
+  }
+
+  def getReadUrl(nino: String): String = {
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protections"
   }
 
   implicit val readApiResponse: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
@@ -72,7 +77,7 @@ trait NpsConnector {
   }
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
-    val requestUrl = getUrl(nino)
+    val requestUrl = getApplyUrl(nino)
     val requestTime = DateTimeUtils.now
 
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
@@ -109,6 +114,40 @@ trait NpsConnector {
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     http.POST[JsValue, HttpResponse](requestUrl, body)
   }
+
+  def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+    val requestUrl = getReadUrl(nino)
+    val requestTime = DateTimeUtils.now
+    val responseFut = get(requestUrl)(hc = addExtraHeaders(hc), ec = ec)
+
+    responseFut map { expectedResponse =>
+      handleExpectedReadResponse(requestUrl,nino,requestTime,expectedResponse)
+    }
+  }
+
+  def get(requestUrl: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    http.GET[HttpResponse](requestUrl)
+  }
+
+  def handleExpectedReadResponse(
+      requestUrl: String,
+      nino: String,
+      requestTime: org.joda.time.DateTime,
+      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+
+    val responseBody  = response.json.as[JsObject]
+    val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    if (responseNino==ninoWithoutSuffix) {
+      HttpResponseDetails(response.status, JsSuccess(responseBody))
+    }
+    else {
+      val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
+      Logger.error(report)
+      HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
+    }
+  }
+
 }
 
 object NpsResponseHandler extends NpsResponseHandler
