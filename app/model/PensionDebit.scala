@@ -18,15 +18,8 @@ package model
 
 import play.api.libs.json.Json
 
-case class ProtectionApplication (
-  protectionType: String,
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None)
+case class PensionDebit(startDate: String, amount: Double)
 
-object ProtectionApplication {
-  implicit val protectionApplicationFormat = Json.format[ProtectionApplication]
+object PensionDebit {
+  implicit val pdFormat = Json.format[PensionDebit]
 }
