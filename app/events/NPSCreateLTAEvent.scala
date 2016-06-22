@@ -52,8 +52,8 @@ object NPSCreateLTAEvent {
       requestTime)
 
     val responseDetails = Map(
-      "responseBody" -> npsResponseBody.value.toString,
-      "status" -> status.toString
+      "responseMessage" -> npsResponseBody.value.toString,
+      "statusCode" -> status.toString
     )
     val responseDataCall = DataCall(
       Map.empty,
