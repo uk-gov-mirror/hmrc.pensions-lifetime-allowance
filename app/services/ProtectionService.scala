@@ -19,6 +19,7 @@ package services
 import connectors.NpsConnector
 import config.MicroserviceAuditConnector
 import events.NPSCreateLTAEvent
+import play.api.Logger
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
@@ -52,14 +53,11 @@ trait ProtectionService {
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
-    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyRequestBody(ninoWithoutSuffix) //TODO Use read transformer
-    npsRequestBody.fold(
-      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
-      req => nps.readExistingProtections(nino) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformApplyResponseBody(lastNinoCharOpt.get, _) }
+    Logger.debug(s"***Service***")
+    nps.readExistingProtections(nino) map { npsResponse =>
+        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }
         HttpResponseDetails(npsResponse.status, transformedResponseJs)
       }
-    )
   }
 
 }

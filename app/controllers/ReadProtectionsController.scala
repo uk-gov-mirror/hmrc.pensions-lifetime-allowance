@@ -17,6 +17,7 @@
 package controllers
 
 import model.{Error, ProtectionApplication}
+import play.api.Logger
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.{BodyParsers, Action}
 import services.ProtectionService
@@ -24,16 +25,19 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.Error
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-object ReadProtections extends ReadProtections {
+object ReadProtectionsController extends ReadProtectionsController {
   override val protectionService = ProtectionService
 }
 
-trait ReadProtections extends BaseController {
+trait ReadProtectionsController extends BaseController {
 
   def protectionService: ProtectionService
 
-  def readExistingProtections(nino: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+  def readExistingProtections(nino: String) = Action.async { implicit request =>
+
+    Logger.debug(s"***Controller***")
 
       protectionService.readExistingProtections(nino) map { response =>
         response.status match {

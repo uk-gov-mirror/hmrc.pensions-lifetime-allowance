@@ -119,13 +119,14 @@ trait NpsConnector {
     val requestUrl = getReadUrl(nino)
     val requestTime = DateTimeUtils.now
     val responseFut = get(requestUrl)(hc = addExtraHeaders(hc), ec = ec)
-
+    Logger.debug(s"***Connector One***")
     responseFut map { expectedResponse =>
       handleExpectedReadResponse(requestUrl,nino,requestTime,expectedResponse)
     }
   }
 
   def get(requestUrl: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    Logger.debug(s"***Connector Two***")
     http.GET[HttpResponse](requestUrl)
   }
 
