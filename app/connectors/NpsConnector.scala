@@ -96,7 +96,6 @@ trait NpsConnector {
 
     val responseBody  = response.json.as[JsObject]
     val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, responseBody, response.status)
-    // Logger.debug(s"Sending audit event: $createLTAEvent")
     audit.sendMergedEvent(createLTAEvent)
     // assertion: nino returned in response must be the same as that sent in the request
     val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
@@ -119,14 +118,13 @@ trait NpsConnector {
     val requestUrl = getReadUrl(nino)
     val requestTime = DateTimeUtils.now
     val responseFut = get(requestUrl)(hc = addExtraHeaders(hc), ec = ec)
-    Logger.debug(s"***Connector One***")
+
     responseFut map { expectedResponse =>
       handleExpectedReadResponse(requestUrl,nino,requestTime,expectedResponse)
     }
   }
 
   def get(requestUrl: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    Logger.debug(s"***Connector Two***")
     http.GET[HttpResponse](requestUrl)
   }
 

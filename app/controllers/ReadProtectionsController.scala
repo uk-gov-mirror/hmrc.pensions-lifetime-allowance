@@ -16,15 +16,12 @@
 
 package controllers
 
-import model.{Error, ProtectionApplication}
-import play.api.Logger
-import play.api.libs.json.{JsObject, Json}
-import play.api.mvc.{BodyParsers, Action}
+import model.Error
+import play.api.libs.json.Json
+import play.api.mvc.Action
 import services.ProtectionService
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.Error
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReadProtectionsController extends ReadProtectionsController {
@@ -37,12 +34,9 @@ trait ReadProtectionsController extends BaseController {
 
   def readExistingProtections(nino: String) = Action.async { implicit request =>
 
-    Logger.debug(s"***Controller***")
-
       protectionService.readExistingProtections(nino) map { response =>
         response.status match {
           case OK if response.body.isSuccess => Ok(response.body.get)
-          case CONFLICT if response.body.isSuccess => Conflict(response.body.get) // this is a normal/expected response
           case _ => {
             //  error response handling
             val responseErrorDetails = if (!response.body.isSuccess) {

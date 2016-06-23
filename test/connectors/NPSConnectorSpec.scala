@@ -76,9 +76,15 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  "The NPS Connector getUrl method" should {
+  "The NPS Connector getApplyUrl method" should {
     "return a  URL that contains the nino passed to it" in {
-      testNPSConnector.getUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
+      testNPSConnector.getApplyUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
+    }
+  }
+
+  "The NPS Connector getReadUrl method" should {
+    "return a  URL that contains the nino passed to it" in {
+      testNPSConnector.getReadUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
     }
   }
 
@@ -150,4 +156,61 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
     }
   }
 
+  "The NPS Connector handleExpectedReadResponse" should {
+    "return a HTTPResponseDetails object with valid fields" in {
+      val requestStr =
+        s"""
+           |{
+           | "nino": "${testNinoWithoutSuffix}"
+           | }
+        """.stripMargin
+      val responseStr =
+        s"""
+          {
+           |"nino": "${testNinoWithoutSuffix}",
+           | "protection": {
+           |   "type": 1
+           |  }
+           |}
+        """.stripMargin
+      val responseBody = Json.parse(requestStr).as[JsObject]
+      val responseDetails = testNPSConnector.handleExpectedReadResponse(
+        "http://localhost:80/path",
+        testNino,
+        DateTimeUtils.now,
+        HttpResponse(200, Some((responseBody))))
+      responseDetails.status shouldBe 200
+      responseDetails.body.isSuccess shouldBe true
+    }
+  }
+  "The NPS Connector handleExpectedReadResponse" should {
+    "return a HTTPResponseDetails object with a 400 status if the nino returned differs from that sent" in {
+      val (t1NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
+      val (t2NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
+
+      val requestStr =
+        s"""
+           |{
+           | "nino": "${t1NinoWithoutSuffix}"
+           | }
+        """.stripMargin
+      val responseStr =
+        s"""
+          {
+           |"nino": "${t2NinoWithoutSuffix}",
+           | "protection": {
+           |   "type": 1
+           |  }
+           |}
+        """.stripMargin
+      val responseBody = Json.parse(requestStr).as[JsObject]
+      val responseDetails = testNPSConnector.handleExpectedReadResponse(
+        "http://localhost:80/path",
+        testNino,
+        DateTimeUtils.now,
+        HttpResponse(200, Some((responseBody))))
+      responseDetails.status shouldBe 400
+      responseDetails.body.isSuccess shouldBe true
+    }
+  }
 }
