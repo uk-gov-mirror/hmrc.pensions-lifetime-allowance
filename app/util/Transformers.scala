@@ -121,6 +121,10 @@ object Transformers {
         copyToTopLevelIfExists("preADayPensionInPayment") and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("nonUKRights") and
+        copyToTopLevelIfExists("pensionDebitAmount") and
+        copyToTopLevelIfExists("pensionDebitEnteredAmount") and
+        copyToTopLevelIfExists("pensionDebitStartDate") and
+        copyToTopLevelIfExists("pensionDebitTotalAmount") and
         copyToTopLevelIfExists("protectedAmount") and
         (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
         copyToTopLevelIfExists("protectionReference")  reduce)
@@ -191,6 +195,10 @@ object Transformers {
       copyIfExists("preADayPensionInPayment") and
       copyIfExists("uncrystallisedRights") and
       copyIfExists("nonUKRights") and
+      copyIfExists("pensionDebitAmount") and
+      copyIfExists("pensionDebitEnteredAmount") and
+      copyIfExists("pensionDebitStartDate") and
+      copyIfExists("pensionDebitTotalAmount") and
       (copyIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
       copyIfExists("protectionReference") reduce
 
@@ -220,7 +228,7 @@ object Transformers {
     )
 
     val putProtectionsIfExist: Reads[JsObject] = mdtpProtectionList.map { protArray =>
-      (__ \ "protections").json.put { protArray }
+      (__ \ "lifetimeAllowanceProtections").json.put { protArray }
     } getOrElse { Reads.pure(Json.obj()) }
 
     val toMdtpResponse =

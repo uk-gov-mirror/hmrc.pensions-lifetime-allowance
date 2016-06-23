@@ -254,10 +254,11 @@ class TransformSpec extends UnitSpec{
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
-      topLevelFields.get("protections").get.as[JsArray].value.size shouldBe 2
 
-      //check protection details topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
-      val p1Fields=topLevelFields.get("protections").get.as[JsArray].value(0).as[JsObject].value
+      val protections=topLevelFields.get("lifetimeAllowanceProtections").get.as[JsArray].value
+      protections.size shouldBe 2
+
+      val p1Fields=protections(0).as[JsObject].value
       p1Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
       p1Fields.get("version").get.as[JsNumber].value.toInt shouldBe 1
       p1Fields.get("protectionType").get.as[JsString].value shouldBe "FP2016"
@@ -267,7 +268,7 @@ class TransformSpec extends UnitSpec{
       p1Fields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1250000.00
       p1Fields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 12
 
-      val p2Fields = topLevelFields.get("protections").get.as[JsArray].value(1).as[JsObject].value
+      val p2Fields = protections(1).as[JsObject].value
       p2Fields.get("protectionType").get.as[JsString].value shouldBe "IP2014"
       p2Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
       p2Fields.get("version").get.as[JsNumber].value.toInt shouldBe 1
