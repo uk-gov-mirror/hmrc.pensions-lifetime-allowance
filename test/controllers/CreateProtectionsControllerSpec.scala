@@ -18,6 +18,7 @@ package controllers
 
 import java.util.Random
 
+import play.api.mvc.Result
 import util.NinoHelper
 import play.api.http.Status
 import play.api.libs.json._
@@ -67,7 +68,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
     s"""
        |  {
        |      "nino": "${testNinoWithoutSuffix}",
-       |      "psaCheckReference" : "PSA123456789",
+       |      "pensionSchemeAdministratorCheckReference" : "PSA123456789",
        |      "protection": {
        |        "id": 1,
        |        "version": 1,
@@ -113,13 +114,13 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
 
-      val fakeRequest = FakeRequest(
+      val fakeRequest: FakeRequest[JsValue] = FakeRequest(
         method = "POST",
         uri = "",
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validApplicationBody)
 
-      val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
+      val result: Future[Result] = testCreateController.applyForProtection(testNino).apply(fakeRequest)
       status(result) must be(OK)
     }
   }
@@ -143,7 +144,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
   "CreateProtectionController" should {
     "handle a 409 (CONFLICT( response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(409, JsSuccess(successfulCreateFP2016NPSResponseBody))))
+        .thenReturn(Future.successful(model.HttpResponseDetails(409, JsSuccess(unsuccessfulCreateFP2016NPSResponseBody))))
 
       val fakeRequest = FakeRequest(
         method = "POST",
