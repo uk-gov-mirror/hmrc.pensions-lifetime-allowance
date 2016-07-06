@@ -22,7 +22,7 @@ import play.api.libs.functional.syntax._
 
 object Transformers {
   private val protectionTypes = Vector(
-    "Unknown", "FP2016", "IP2014", "IP2016", "Primary", "Enhanced", "Fixed", " FP2014"
+    "Unknown", "FP2016", "IP2014", "IP2016", "Primary", "Enhanced", "Fixed", "FP2014"
   )
 
   private val protectionStatuses = Vector(
