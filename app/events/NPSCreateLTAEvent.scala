@@ -17,7 +17,7 @@
 package events
 
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.play.audit.model.{MergedDataEvent, DataCall}
+import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.audit.EventTypes
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -25,42 +25,19 @@ import uk.gov.hmrc.play.http._
 import play.api.libs.json.{JsObject, JsPath}
 import uk.gov.hmrc.time.DateTimeUtils
 
-class NPSCreateLTAEvent(npsRequestDataCall: DataCall, npsResponseDataCall: DataCall)(implicit hc: HeaderCarrier)
-  extends MergedDataEvent(
-    auditSource = "pla",
-    auditType = EventTypes.OutboundCall,
-    request = npsRequestDataCall,
-    response = npsResponseDataCall)
-
-object NPSCreateLTAEvent {
-  def apply(nino: String,
-            requestUrl: String,
-            requestTime: org.joda.time.DateTime,
-            npsRequestBody: JsObject,
-            npsResponseBody: JsObject,
-            status: Int)(implicit hc: HeaderCarrier) =
-  {
-    val responseTime = DateTimeUtils.now
-
-    val requestDetails = Seq(
+class NPSCreateLTAEvent(
+    nino: String,
+    statusCode: Int,
+    protectionType: Int,
+    path: String,
+    protectionStatus: Option[Int])(implicit hc: HeaderCarrier)
+  extends DataEvent(
+    auditSource = "pensions-lifetime-allowance",
+    auditType = "CreateAllowance",
+    detail = Map[String,String](
       "nino" -> nino,
-      "requestBody" -> npsRequestBody.value.toString
-    )
-    val requestDataCall = DataCall(
-      hc.toAuditTags("CreateLTA", requestUrl),
-      hc.toAuditDetails(requestDetails: _*),
-      requestTime)
-
-    val responseDetails = Map(
-      "responseMessage" -> npsResponseBody.value.toString,
-      "statusCode" -> status.toString
-    )
-    val responseDataCall = DataCall(
-      Map.empty,
-      responseDetails,
-      responseTime
-    )
-
-    new NPSCreateLTAEvent(requestDataCall, responseDataCall)
-  }
-}
+      "protectionType" -> protectionType.toString,
+      "statusCode" -> statusCode.toString,
+      "protectionStatus" -> protectionStatus.map(_.toString).getOrElse("n/a")
+    ),
+    tags = hc.toAuditTags("create-pensions-lifetime-allowance", path))
