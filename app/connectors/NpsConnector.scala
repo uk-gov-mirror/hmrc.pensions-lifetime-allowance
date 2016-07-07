@@ -95,8 +95,11 @@ trait NpsConnector {
       response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
 
     val responseBody  = response.json.as[JsObject]
-    val createLTAEvent = NPSCreateLTAEvent(nino, requestUrl, requestTime, requestBody, responseBody, response.status)
-    audit.sendMergedEvent(createLTAEvent)
+    val protType = (requestBody \ "protection" \ "type").as[JsNumber].value.toInt
+    val protStatus = (responseBody \ "protection").as[JsObject].fields.find(_._1 == "status").map(_._2.as[JsNumber].value.toInt)
+    val createLTAEvent = new NPSCreateLTAEvent(nino=nino, statusCode = response.status, path=requestUrl,protectionType = protType, protectionStatus = protStatus)
+    Logger.debug("Created audit event: " + createLTAEvent)
+    audit.sendEvent(createLTAEvent)
     // assertion: nino returned in response must be the same as that sent in the request
     val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
