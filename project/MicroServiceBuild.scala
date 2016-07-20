@@ -41,7 +41,7 @@ private object AppDependencies {
   private val playUrlBindersVersion = "1.0.0"
   private val playConfigVersion = "2.0.1"
   private val domainVersion = "3.7.0"
-  private val hmrcTestVersion = "1.6.0"
+  private val hmrcTestVersion = "1.7.0"
   private val jsoupVersion = "1.8.3"
   private val scalatestPlusPlayVersion = "1.2.0"
 
