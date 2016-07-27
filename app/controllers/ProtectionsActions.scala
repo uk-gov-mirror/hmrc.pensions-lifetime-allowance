@@ -43,6 +43,7 @@ case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionCont
         case CitizenRecordOther4xxResponse(e) => Future.successful(BadRequest)
         case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 500 => Future.successful(InternalServerError)
         case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 => Future.successful(GatewayTimeout)
+        case _ => Future.successful(InternalServerError)
       }
     }
   }
