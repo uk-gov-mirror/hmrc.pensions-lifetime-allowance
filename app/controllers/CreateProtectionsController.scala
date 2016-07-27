@@ -30,13 +30,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object CreateProtectionsController extends CreateProtectionsController {
   override val protectionService = ProtectionService
+  override def WithCitizenRecordCheck(nino: String)= WithCitizenRecordCheckAction(nino)
 }
 
 trait CreateProtectionsController extends BaseController {
 
   def protectionService: ProtectionService
+  def WithCitizenRecordCheck(nino:String): ActionBuilder[Request]
 
-  def applyForProtection(nino: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+  def applyForProtection(nino: String) = WithCitizenRecordCheck(nino).async(BodyParsers.parse.json) { implicit request =>
     val protectionApplicationJs = request.body.validate[ProtectionApplication]
 
     protectionApplicationJs.fold(

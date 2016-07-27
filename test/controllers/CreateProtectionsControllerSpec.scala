@@ -18,7 +18,7 @@ package controllers
 
 import java.util.Random
 
-import play.api.mvc.Result
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.NinoHelper
 import play.api.http.Status
 import play.api.libs.json._
@@ -37,7 +37,7 @@ import connectors.NpsConnector
 import services.ProtectionService
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
 
@@ -105,8 +105,16 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
     override val nps = mockNpsConnector
   }
 
+  case class AlwaysExecuteAction(nino: String) extends ActionBuilder[Request] {
+
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
+      block(request)
+    }
+  }
+
   object testCreateController extends CreateProtectionsController {
     override val protectionService = testProtectionService
+    override def WithCitizenRecordCheck(nino:String) = AlwaysExecuteAction(nino)
   }
 
   "CreateProtectionController" should {
