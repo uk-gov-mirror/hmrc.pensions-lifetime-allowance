@@ -52,55 +52,55 @@ class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with WithFakeApp
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(Ok))
-    val x = await(result)
-    x shouldBe Ok
+    val resultStatus = await(result)
+    resultStatus shouldBe Ok
   }
 
   "test Citizen Record Not Found" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordNotFound))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe NotFound
+    val resultStatus = await(result)
+    resultStatus shouldBe NotFound
   }
 
   "test Citizen Record Locked" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordLocked))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe Locked
+    val resultStatus = await(result)
+    resultStatus shouldBe Locked
   }
 
   "test Citizen Record search resulted in a 4xx response" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordOther4xxResponse(new Upstream4xxResponse("",400,400))))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe BadRequest
+    val resultStatus = await(result)
+    resultStatus shouldBe BadRequest
   }
 
   "test Citizen Record search resulted in a 500 response" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",500,500))))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe InternalServerError
+    val resultStatus = await(result)
+    resultStatus shouldBe InternalServerError
   }
 
   "test Citizen Record search resulted in a 503 response" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",503,503))))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe GatewayTimeout
+    val resultStatus = await(result)
+    resultStatus shouldBe GatewayTimeout
   }
 
   "test Citizen Record search resulted in a 5xx response" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",501,501))))
 
     val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val x = await(result)
-    x shouldBe InternalServerError
+    val resultStatus = await(result)
+    resultStatus shouldBe InternalServerError
   }
 }
