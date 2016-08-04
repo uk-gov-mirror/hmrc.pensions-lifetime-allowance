@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object CreateProtectionsController extends CreateProtectionsController {
   override val protectionService = ProtectionService
-  override def WithCitizenRecordCheck(nino: String)= WithCitizenRecordCheckAction(nino)
+  override def WithCitizenRecordCheck(nino: String)= ProtectionsActions.WithCitizenRecordCheckAction(nino)
 }
 
 trait CreateProtectionsController extends BaseController {

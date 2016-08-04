@@ -44,13 +44,12 @@ case class CitizenRecord5xxResponse(e: Upstream5xxResponse) extends CitizenRecor
 
 trait CitizenDetailsConnector {
 
-  def http: HttpGet with HttpPost with HttpPut
+  def http: HttpGet
   val serviceUrl: String
   val checkRequired: Boolean
   
   def getCitizenRecordCheckUrl(nino: String): String = {
-    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
-    serviceUrl + s"/citizen-details/${ninoWithoutSuffix}/designatory-details"
+    serviceUrl + s"/citizen-details/${nino}/designatory-details"
   }
 
   def checkCitizenRecord(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CitizenRecordCheckResult] = {
