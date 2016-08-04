@@ -16,25 +16,13 @@
 
 package connectors
 
-import java.lang.Exception
 import java.util.Random
-import javax.print.attribute.standard.ReferenceUriSchemesSupported
 
-import config.WSHttp._
-import connectors.CitizenRecordOther4xxResponse
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import play.api.libs.json.{JsObject, Json}
-import play.api.mvc.Results._
-import uk.gov.hmrc.play.config.AppName
-import uk.gov.hmrc.play.http.hooks.HttpHook
-import uk.gov.hmrc.play.http.ws._
-import uk.gov.hmrc.time.DateTimeUtils
-import util._
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 import uk.gov.hmrc.play.http._
-import config.WSHttp
 import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
 
@@ -49,6 +37,13 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
   object testCitizenDetailsConnector extends CitizenDetailsConnector {
     override val serviceUrl = "http://localhost:80"
     override def http = mockHttp
+    override val checkRequired = true
+  }
+
+  object NoCheckRequiredCitizenDetailsConnector extends CitizenDetailsConnector {
+    override val serviceUrl = "http://localhost:80"
+    override def http = mockHttp
+    override val checkRequired = false
   }
 
   val rand = new Random()
@@ -62,6 +57,15 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
   "The CitizenDetails Connector getCitizenRecordCheckUrl method" should {
     "return a  URL that contains the nino passed to it" in {
       testCitizenDetailsConnector.getCitizenRecordCheckUrl(testNino).contains(testNino) shouldBe true
+    }
+  }
+
+  "The CitizenDetails Connector checkCitizenRecord method" should {
+    "return a CitizenRecordOK response when no check is needed" in {
+      val f = NoCheckRequiredCitizenDetailsConnector.checkCitizenRecord(testNino)
+
+      val res = await(f)
+      res shouldBe CitizenRecordOK
     }
   }
 

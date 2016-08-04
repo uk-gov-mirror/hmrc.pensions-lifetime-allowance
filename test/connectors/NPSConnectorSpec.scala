@@ -71,7 +71,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
         val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(400))
         fail("Exception not thrown")
       } catch {
-        case ex =>
+        case ex: Throwable =>
       }
     }
   }
