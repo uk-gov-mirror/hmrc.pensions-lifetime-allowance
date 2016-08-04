@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReadProtectionsController extends ReadProtectionsController {
   override val protectionService = ProtectionService
-  override def WithCitizenRecordCheck(nino: String) = WithCitizenRecordCheckAction(nino)
+  override def WithCitizenRecordCheck(nino: String) = ProtectionsActions.WithCitizenRecordCheckAction(nino)
 }
 
 trait ReadProtectionsController extends BaseController {

@@ -26,24 +26,28 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 
 
-object ProtectionsActions{
-  lazy val citizenDetailsConnector = CitizenDetailsConnector
+object ProtectionsActions extends ProtectionsActions{
+  override lazy val citizenDetailsConnector = CitizenDetailsConnector
 }
 
-case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
+trait ProtectionsActions{
+  val citizenDetailsConnector: CitizenDetailsConnector
 
-  def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
-    implicit val hc: HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+  case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
 
-    ProtectionsActions.citizenDetailsConnector.checkCitizenRecord(nino) flatMap { citizenCheckResult =>
-      citizenCheckResult match {
-        case CitizenRecordOK => block(request)
-        case CitizenRecordNotFound => Future.successful(NotFound)
-        case CitizenRecordLocked => Future.successful(Locked)
-        case CitizenRecordOther4xxResponse(e) => Future.successful(BadRequest)
-        case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 500 => Future.successful(InternalServerError)
-        case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 => Future.successful(GatewayTimeout)
-        case _ => Future.successful(InternalServerError)
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
+      implicit val hc: HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers)
+
+      citizenDetailsConnector.checkCitizenRecord(nino) flatMap { citizenCheckResult =>
+        citizenCheckResult match {
+          case CitizenRecordOK => block(request)
+          case CitizenRecordNotFound => Future.successful(NotFound)
+          case CitizenRecordLocked => Future.successful(Locked)
+          case CitizenRecordOther4xxResponse(e) => Future.successful(BadRequest)
+          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 500 => Future.successful(InternalServerError)
+          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 => Future.successful(GatewayTimeout)
+          case _ => Future.successful(InternalServerError)
+        }
       }
     }
   }
