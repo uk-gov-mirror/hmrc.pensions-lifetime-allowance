@@ -30,6 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object CitizenDetailsConnector extends CitizenDetailsConnector with ServicesConfig {
 
   override val serviceUrl = baseUrl("citizen-details")
+  override val checkRequired = getConfBool("citizen-details.checkRequired", true)
   override def http = WSHttp
 
 }
@@ -45,6 +46,7 @@ trait CitizenDetailsConnector {
 
   def http: HttpGet with HttpPost with HttpPut
   val serviceUrl: String
+  val checkRequired: Boolean
   
   def getCitizenRecordCheckUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
@@ -52,14 +54,18 @@ trait CitizenDetailsConnector {
   }
 
   def checkCitizenRecord(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CitizenRecordCheckResult] = {
-    val requestUrl = getCitizenRecordCheckUrl(nino)
-    http.GET[HttpResponse](requestUrl) map {
-      _ => CitizenRecordOK
-    } recover {
-      case e: Upstream4xxResponse if (e.upstreamResponseCode == LOCKED) => CitizenRecordLocked
-      case e: NotFoundException => CitizenRecordNotFound
-      case e: Upstream4xxResponse => CitizenRecordOther4xxResponse(e)
-      case e: Upstream5xxResponse => CitizenRecord5xxResponse(e)
+    if(!checkRequired) {
+      Future.successful(CitizenRecordOK)
+    } else {
+      val requestUrl = getCitizenRecordCheckUrl(nino)
+      http.GET[HttpResponse](requestUrl) map {
+        _ => CitizenRecordOK
+      } recover {
+        case e: Upstream4xxResponse if (e.upstreamResponseCode == LOCKED) => CitizenRecordLocked
+        case e: NotFoundException => CitizenRecordNotFound
+        case e: Upstream4xxResponse => CitizenRecordOther4xxResponse(e)
+        case e: Upstream5xxResponse => CitizenRecord5xxResponse(e)
+      }
     }
   }
 }
