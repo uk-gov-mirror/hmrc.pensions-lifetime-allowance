@@ -17,6 +17,7 @@
 package controllers
 
 import model.Error
+import play.api.mvc._
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import services.ProtectionService
@@ -26,13 +27,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReadProtectionsController extends ReadProtectionsController {
   override val protectionService = ProtectionService
+  override def WithCitizenRecordCheck(nino: String) = ProtectionsActions.WithCitizenRecordCheckAction(nino)
 }
 
 trait ReadProtectionsController extends BaseController {
 
   def protectionService: ProtectionService
+  def WithCitizenRecordCheck(nino: String): ActionBuilder[Request]
 
-  def readExistingProtections(nino: String) = Action.async { implicit request =>
+  def readExistingProtections(nino: String) = WithCitizenRecordCheck(nino).async { implicit request =>
 
       protectionService.readExistingProtections(nino) map { response =>
         response.status match {

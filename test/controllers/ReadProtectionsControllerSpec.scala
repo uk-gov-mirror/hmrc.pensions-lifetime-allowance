@@ -24,14 +24,15 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
-import play.api.libs.json.{JsError, JsSuccess, JsObject, Json}
+import play.api.libs.json.{JsError, JsObject, JsSuccess, Json}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.play.http.HeaderCarrier
 import util.NinoHelper
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
 
@@ -99,8 +100,17 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
     override val nps = mockNpsConnector
   }
 
+
+  case class AlwaysExecuteAction(nino: String) extends ActionBuilder[Request] {
+
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
+      block(request)
+    }
+  }
+
   object testCreateController extends ReadProtectionsController {
     override val protectionService = testProtectionService
+    override def WithCitizenRecordCheck(nino:String) = AlwaysExecuteAction(nino)
   }
 
   "ReadProtectionsController" should {
