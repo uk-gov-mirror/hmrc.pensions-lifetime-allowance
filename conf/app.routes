@@ -1,6 +1,6 @@
 # microservice specific routes
 
 POST       /individuals/:nino/protections controllers.CreateProtectionsController.applyForProtection(nino: String)
-GET        /individuals/:nino/protections controllers.ReadProtectionsController.readExistingProtections(nino: String, countOnly: Option[Boolean] = None)
+GET        /individuals/:nino/protections controllers.ReadProtectionsController.readExistingProtections(nino: String, countOnly: Option[Boolean] ?= None)
 
 
