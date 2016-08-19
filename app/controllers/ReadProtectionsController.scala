@@ -39,19 +39,13 @@ trait ReadProtectionsController extends BaseController {
 
   def WithCitizenRecordCheck(nino: String): ActionBuilder[Request]
 
-  def readExistingProtections(nino: String, countOnly: Option[Boolean]): Action[AnyContent] =
-    countOnly match {
-      case Some(true) => readExistingProtectionsCount(nino)
-      case _ => readExistingProtections(nino)
-    }
-
   /**
     * Return the full details of current versions of all protections held by the individual
     *
     * @param nino national insurance number of the individual
     * @return json object full details of the existing protections held fby the individual
     */
-  private def readExistingProtections(nino: String) : Action[AnyContent] = WithCitizenRecordCheck(nino).async { implicit request =>
+  def readExistingProtections(nino: String) : Action[AnyContent] = WithCitizenRecordCheck(nino).async { implicit request =>
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => Ok(response.body.get)
@@ -62,10 +56,10 @@ trait ReadProtectionsController extends BaseController {
 
   /*
    * Returns a count of the existing protections for the individual
-   * @param nini
+   * @param nino
    * @return a json object with a single field 'count' set to the number of existing protections
    */
-  private def readExistingProtectionsCount(nino: String) : Action[AnyContent] = Action.async { implicit request =>
+  def readExistingProtectionsCount(nino: String) : Action[AnyContent] = Action.async { implicit request =>
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => {
