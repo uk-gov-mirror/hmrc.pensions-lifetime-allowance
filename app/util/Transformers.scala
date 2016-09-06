@@ -40,64 +40,81 @@ object Transformers {
   private def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsString].map(s => JsNumber(lookupTable.indexOf(s.value))))
 
+  private def string2IntIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
+    string2Int(fieldName, lookupTable) orElse Reads.pure(Json.obj())
+
   private def int2String(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsNumber].map(n => JsString(lookupTable(n.value.toInt))))
 
   private def int2StringIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     int2String(fieldName, lookupTable) orElse Reads.pure(Json.obj())
 
-  /**
-    * Transform an incoming MDTP API protection application request body Json to a request body for the corresponding
-    * outbound NPS API request
-    *
-    * @param ninoWithoutSuffix the NINO with the suffix character dropped, as per DES API requirements
-    * @param mdtpApplicationJson the incoming protecion application request body
-    * @return
-    */
-  def transformApplyRequestBody(ninoWithoutSuffix: String, mdtpApplicationJson: JsObject): JsResult[JsObject] = {
-
-    def mdtpToNpsPensionDebit =
-      rename("amount", "pensionDebitEnteredAmount") and
+  // pension debit handling
+  private def mdtpToNpsPensionDebit =
+    rename("amount", "pensionDebitEnteredAmount") and
       rename("startDate", "pensionDebitStartDate") reduce
-
-    // arrays are tricky to manipulate in json transformers - reading them as a list and then
-    // transforming tach item is easier . Luckily our lists won't be very large so no performance concerns with this.
-    def readPensionDebitList = (__ \ "pensionDebits").readNullable[List[JsObject]]
-    val mdtpPensionDebits = mdtpApplicationJson.validate(readPensionDebitList)
-
-    val npsPensionDetails = mdtpPensionDebits.fold(
-      errors => throw new Exception("Unable to parse pension debits. " + errors),
-      pdListOpt => pdListOpt map { pdList => JsArray(pdList map { _.transform(mdtpToNpsPensionDebit).get }) }
-    )
-
-    val putPensionDebitsIfExist: Reads[JsObject] = npsPensionDetails.map { pdArray =>
+  // arrays are tricky to manipulate in json transformers - reading them as a list of JsObject and then
+  // transforming each object is easier . Luckily our lists won't be very large so no performance concerns with this.
+  private def readMdtpPensionDebitObjects = (__ \ "pensionDebits").readNullable[List[JsObject]]
+  private def readMdtpPensionDebitObjectsFrom(obj: JsObject) = obj.validate(readMdtpPensionDebitObjects)
+  private def mdtpToNpsPensionDebitListFrom(obj: JsObject) =  readMdtpPensionDebitObjectsFrom(obj: JsObject).fold(
+    errors => throw new Exception("Unable to parse pension debits. " + errors),
+    pdListOpt => pdListOpt map { pdList => JsArray(pdList map { _.transform(mdtpToNpsPensionDebit).get }) }
+  )
+  private def putNpsPensionDebitsIfExist(npsPensionDebits: Option[JsArray]): Reads[JsObject] = {
+    npsPensionDebits.map { pdArray =>
       (__ \ "pensionDebits").json.put { pdArray }
     } getOrElse { Reads.pure(Json.obj()) }
+  }
+  private def putNpsProtectionIdIfExists(protectionId: Option[Int]): Reads[JsObject] = {
+    protectionId.map { id =>
+      (__ \ "id").json.put { JsNumber(id) }
+    } getOrElse { Reads.pure(Json.obj()) }
+  }
 
-    val npsProtectionFromApplication =
-      ((rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
-        renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and 
-        copyIfExists("preADayPensionInPayment") and
-        copyIfExists("uncrystallisedRights") and
-        copyIfExists("nonUKRights") and
-        copyIfExists("relevantAmount") reduce)
+  // create NPS protection object from MDTP request
+  private def mdtpToNpsProtection(protectionId: Option[Int]) =
+    ((rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
+      renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and
+      putNpsProtectionIdIfExists(protectionId) and
+      copyIfExists("version") and
+      (copyIfExists("status") andThen string2IntIfExists("status", protectionStatuses)) and
+      copyIfExists("preADayPensionInPayment") and
+      copyIfExists("uncrystallisedRights") and
+      copyIfExists("nonUKRights") and
+      copyIfExists("relevantAmount") reduce)
 
-    // following builds NPS request with nino and protecion object, but wothout pension debits
-    val insertNinoAndProtectionObject = __.json.pickBranch(
-      (__ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
-      (__ \ 'protection).json.copyFrom((__).json.pick) reduce
-    )
+  // following builds NPS request with nino and protection object (but not with pension debits)
+  private def insertNinoAndProtectionObject(ninoWithoutSuffix: String) = __.json.pickBranch(
+    (__ \ 'nino).json.put(JsString(ninoWithoutSuffix)) and
+      (__ \ 'protection).json.copyFrom((__).json.pick) reduce)
 
-    val npsRequestFromApplication =
-      (putPensionDebitsIfExist and
-      (npsProtectionFromApplication andThen insertNinoAndProtectionObject) reduce)
+  /**
+    * Transform an incoming MDTP API protection application or amend request body Json to a request body for
+    * the corresponding outbound NPS API request.
+    *
+    * @param ninoWithoutSuffix the NINO with the suffix character dropped, as per DES API requirements
+    * @param protectionId the id of the protection to amend (None in the case of Apply requests)
+    * @param mdtpRequestJson the incoming protection application/amendment request body
+    * @return result of transformation containing JSON body for outgoing NPS request
+    */
+  def transformApplyOrAmendRequestBody(
+      ninoWithoutSuffix: String,
+      protectionId: Option[Int],
+      mdtpRequestJson: JsObject): JsResult[JsObject] = {
 
-    mdtpApplicationJson.transform(npsRequestFromApplication)
+    val npsPensionDebits= mdtpToNpsPensionDebitListFrom(mdtpRequestJson)
+
+    val npsRequestFromApplyOrAmend =
+      (putNpsPensionDebitsIfExist(npsPensionDebits) and
+      (mdtpToNpsProtection(protectionId) andThen insertNinoAndProtectionObject(ninoWithoutSuffix)) reduce)
+
+    mdtpRequestJson.transform(npsRequestFromApplyOrAmend)
   }
 
   /**
-    * Transform a received NPS response for an Application into that to be returned to the client of this
-    * service.
+    * Transform a received NPS response for an Application or Amendment request into that to be returned to the client of
+    * this service.
     *
     * @param ninoSuffix the last character of the NINO associated with the request - needs to be appended to the
     *                   NINO returned by the DES API
@@ -105,7 +122,7 @@ object Transformers {
     * @return a Json body for return to the MDTP service client.
     */
 
-  def transformApplyResponseBody(ninoSuffix: Char, npsResponseJson: JsObject): JsResult[JsObject] = {
+  def transformApplyOrAmendResponseBody(ninoSuffix: Char, npsResponseJson: JsObject): JsResult[JsObject] = {
 
     def copyToTopLevel(fieldName: String): Reads[JsObject] =
       (__ \ fieldName).json.copyFrom((__ \ "protection" \ fieldName).json.pick)

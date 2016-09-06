@@ -35,18 +35,41 @@ trait ProtectionService {
 
   def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
-    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyRequestBody(ninoWithoutSuffix, applicationRequestBody)
+    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
+      ninoWithoutSuffix,
+      None,
+      applicationRequestBody)
     npsRequestBody.fold(
       errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
       req => nps.applyForProtection(nino, req) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformApplyResponseBody(lastNinoCharOpt.get, _) }
+        val transformedResponseJs = npsResponse.body.flatMap {
+          Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
+        }
+        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+      }
+    )
+  }
+
+
+  def amendProtection(nino: String, protectionId: Integer, amendmentRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+    val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
+    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
+      ninoWithoutSuffix,
+      Some(protectionId),
+      amendmentRequestBody)
+    npsRequestBody.fold(
+      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
+      req => nps.amendProtection(nino, protectionId, req) map { npsResponse =>
+        val transformedResponseJs = npsResponse.body.flatMap {
+          Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
+        }
         HttpResponseDetails(npsResponse.status, transformedResponseJs)
       }
     )
   }
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
-    val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
+    val (_, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
 
     nps.readExistingProtections(nino) map { npsResponse =>
         val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }

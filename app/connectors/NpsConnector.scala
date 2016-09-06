@@ -19,7 +19,7 @@ package connectors
 import util.NinoHelper
 import config.WSHttp
 import config.MicroserviceAuditConnector
-import events.NPSCreateLTAEvent
+import events.{NPSBaseLTAEvent,NPSCreateLTAEvent,NPSAmendLTAEvent}
 import model.{Error,HttpResponseDetails}
 
 import play.api.libs.json._
@@ -67,6 +67,11 @@ trait NpsConnector {
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
   }
 
+  def getAmendUrl(nino: String, id: Int): String = {
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection/${id}"
+  }
+
   def getReadUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protections"
@@ -83,28 +88,50 @@ trait NpsConnector {
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { expectedResponse =>
-      handleExpectedApplyResponse(requestUrl,nino,requestTime, body,expectedResponse)
+      val responseBody =  expectedResponse.json.as[JsObject]
+      val auditEvent = new NPSCreateLTAEvent(
+        nino=nino,
+        npsRequestBodyJs=body,
+        npsResponseBodyJs = responseBody,
+        statusCode = expectedResponse.status,
+        path = requestUrl
+      )
+      handleExpectedResponse(nino, Some(auditEvent), responseBody, expectedResponse.status)
     }
   }
 
-  def handleExpectedApplyResponse(
-      requestUrl: String,
-      nino: String,
-      requestTime: org.joda.time.DateTime,
-      requestBody: JsObject,
-      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+  def amendProtection(nino: String,id: Int, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+    val requestUrl = getAmendUrl(nino, id)
+    val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    val responseBody  = response.json.as[JsObject]
-    val protType = (requestBody \ "protection" \ "type").as[JsNumber].value.toInt
-    val protStatus = (responseBody \ "protection").as[JsObject].fields.find(_._1 == "status").map(_._2.as[JsNumber].value.toInt)
-    val createLTAEvent = new NPSCreateLTAEvent(nino=nino, statusCode = response.status, path=requestUrl,protectionType = protType, protectionStatus = protStatus)
-    Logger.debug("Created audit event: " + createLTAEvent)
-    audit.sendEvent(createLTAEvent)
+    responseFut map { expectedResponse =>
+      val responseBody =  expectedResponse.json.as[JsObject]
+      val auditEvent = new NPSAmendLTAEvent(
+        nino=nino,
+        id = id,
+        npsRequestBodyJs=body,
+        npsResponseBodyJs = expectedResponse.json.as[JsObject],
+        statusCode = expectedResponse.status,
+        path = requestUrl
+      )
+      handleExpectedResponse(nino, Some(auditEvent), responseBody, expectedResponse.status)
+    }
+  }
+
+  def handleExpectedResponse(
+      nino: String,
+      auditEvent: Option[NPSBaseLTAEvent],
+      responseBody: JsObject,
+      httpStatus: Int)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+    auditEvent foreach { event =>
+      Logger.debug("Created audit event: " + auditEvent)
+      audit.sendEvent(event)
+    }
     // assertion: nino returned in response must be the same as that sent in the request
-    val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
+    val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
-    if (responseNino==ninoWithoutSuffix) {
-      HttpResponseDetails(response.status, JsSuccess(responseBody))
+    if (responseNino == ninoWithoutSuffix) {
+      HttpResponseDetails(httpStatus, JsSuccess(responseBody))
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"

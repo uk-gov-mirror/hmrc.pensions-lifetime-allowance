@@ -141,7 +141,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid received FP2016 protection application request" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, fp2016ApplicationRequestBody)
+      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, fp2016ApplicationRequestBody)
       val topLevelFields=npsRequestBody.get.value
       topLevelFields.size shouldBe 2
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
@@ -155,7 +155,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid NPS response to a successful FP2016 Create Lifetime Allowance request" should {
     "transform to a successful and valid FP2016 application response body for the original MDTP client request" in {
-      val responseBody = transformApplyResponseBody(testNinoSuffixChar.get, successfulCreateFP2016NPSResponseBody)
+      val responseBody = transformApplyOrAmendResponseBody(testNinoSuffixChar.get, successfulCreateFP2016NPSResponseBody)
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
@@ -172,7 +172,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid NPS response to an unsuccessful IP2014 Create Lifetime Allowance request" should {
     "transform to a unsuccessful but valid IP2014 application response body for the original MDTP client request" in {
-      val responseBody = transformApplyResponseBody(testNinoSuffixChar.get, unsuccessfulCreateIP2014NPSResponseBody)
+      val responseBody = transformApplyOrAmendResponseBody(testNinoSuffixChar.get, unsuccessfulCreateIP2014NPSResponseBody)
       println(responseBody)
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
@@ -186,7 +186,7 @@ class TransformSpec extends UnitSpec{
 
   "A valid received IP2016 protection application request" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, ip2016ApplicationRequestBody)
+      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestBody)
       println("==> " + npsRequestBody)
       val npsTopLevelFields=npsRequestBody.get.value
       npsTopLevelFields.size shouldBe 2
@@ -207,7 +207,7 @@ class TransformSpec extends UnitSpec{
   "A valid received IP2016 protection application request with pension debits" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
       println("Input ==> " + ip2016ApplicationRequestWithPensionDebitsBody )
-      val npsRequestBody = transformApplyRequestBody(testNinoWithoutSuffix, ip2016ApplicationRequestWithPensionDebitsBody)
+      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestWithPensionDebitsBody)
       println("Output ==> " + npsRequestBody)
       val npsTopLevelFields=npsRequestBody.get.value
       npsTopLevelFields.size shouldBe 3
@@ -276,5 +276,4 @@ class TransformSpec extends UnitSpec{
       p2Fields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
     }
   }
-
 }
