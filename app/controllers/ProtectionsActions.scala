@@ -16,15 +16,12 @@
 
 package controllers
 
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc._
+import connectors._
+import play.api.Logger
 import play.api.mvc.Results._
-import uk.gov.hmrc.play.microservice.controller.BaseController
-import connectors.CitizenDetailsConnector
-import connectors.{CitizenRecord5xxResponse, CitizenRecordLocked, CitizenRecordNotFound, CitizenRecordOK, CitizenRecordOther4xxResponse}
+import play.api.mvc._
 import uk.gov.hmrc.play.http.HeaderCarrier
-
-
+import scala.concurrent.{ExecutionContext, Future}
 
 object ProtectionsActions extends ProtectionsActions{
   override lazy val citizenDetailsConnector = CitizenDetailsConnector
@@ -35,18 +32,28 @@ trait ProtectionsActions{
 
   case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
 
+    def logErrorAndRespond(err: String, status: Status): Future[Result] = {
+      Logger.error(err)
+      Future.successful(status(err))
+    }
+
+    def logErrorAndRespondFromUpstreamResponse(err: String, status: Status, upstreamResponse: String): Future[Result] = {
+      Logger.error(upstreamResponse)
+      Future.successful(status(s"$err\nResponse: $upstreamResponse"))
+    }
+
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
       implicit val hc: HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers)
 
       citizenDetailsConnector.checkCitizenRecord(nino) flatMap { citizenCheckResult =>
         citizenCheckResult match {
-          case CitizenRecordOK => block(request)
-          case CitizenRecordNotFound => Future.successful(NotFound)
-          case CitizenRecordLocked => Future.successful(Locked)
-          case CitizenRecordOther4xxResponse(e) => Future.successful(BadRequest)
-          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 500 => Future.successful(InternalServerError)
-          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 => Future.successful(GatewayTimeout)
-          case _ => Future.successful(InternalServerError)
+          case CitizenRecordOK                  => block(request)
+          case CitizenRecordNotFound            => logErrorAndRespond(s"Citizen Record Check: Not Found for '$nino'", NotFound)
+          case CitizenRecordLocked              => logErrorAndRespond(s"Citizen Record Check: Locked for '$nino'", Locked)
+          case CitizenRecordOther4xxResponse(e) => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: ${e.upstreamResponseCode} response for '$nino'", BadRequest, e.message)
+          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503   => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream 503 response for '$nino'", GatewayTimeout, e.message)
+          case CitizenRecord5xxResponse(e)      => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream ${e.upstreamResponseCode} response for '$nino'", InternalServerError, e.message)
+          case _                                => logErrorAndRespond("err", InternalServerError)
         }
       }
     }
