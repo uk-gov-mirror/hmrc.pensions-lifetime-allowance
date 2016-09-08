@@ -32,7 +32,7 @@ object TransformSpec {
 
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  import model.{ProtectionApplication, PensionDebit}
+  import model.{ProtectionApplication, ProtectionAmendment, PensionDebit}
 
   val fp2016ApplicationRequestBody = Json.toJson(ProtectionApplication(
     protectionType = "FP2016"
@@ -41,14 +41,17 @@ object TransformSpec {
   val testNino = randomNino
   val (testNinoWithoutSuffix, testNinoSuffixChar) = dropNinoSuffix(testNino)
 
+  val testProtectionId = 1
+  val testProtectionVersion = 1
+
   val successfulCreateFP2016NPSResponseBody = Json.parse(
     s"""
       |  {
       |      "nino": "${testNinoWithoutSuffix}",
       |      "psaCheckReference" : "PSA123456789",
       |      "protection": {
-      |        "id": 1,
-      |        "version": 1,
+      |        "id": ${testProtectionId},
+      |        "version": ${testProtectionVersion},
       |        "type": 1,
       |        "certificateDate": "2015-05-22",
       |        "certificateTime": "12:22:59",
@@ -67,8 +70,8 @@ object TransformSpec {
       |  {
       |      "nino": "${testNinoWithoutSuffix}",
       |      "protection": {
-      |        "id": 1,
-      |        "version": 1,
+      |        "id": ${testProtectionId},
+      |        "version": ${testProtectionVersion},
       |        "type": 2,
       |        "status": 5,
       |        "notificationID": 10
@@ -92,8 +95,8 @@ object TransformSpec {
        |  "pensionSchemeAdministratorCheckReference": "PSA123456789",
        |  "protections": [
        |    {
-       |      "id": 1,
-       |      "version": 1,
+       |      "id": ${testProtectionId},
+       |      "version": ${testProtectionVersion},
        |      "type": 1,
        |      "certificateDate": "2015-05-22",
        |      "certificateTime": "12:22:59",
@@ -104,8 +107,8 @@ object TransformSpec {
        |      "notificationID": 12
        |    },
        |    {
-       |      "id": 1,
-       |      "version": 1,
+       |      "id": ${testProtectionId + 1},
+       |      "version": ${testProtectionVersion},
        |      "type": 2,
        |      "status": 5,
        |      "notificationID": 10
@@ -114,14 +117,32 @@ object TransformSpec {
        |}
      """.stripMargin).as[JsObject]
 
-  val ip2016ApplicationRequestBody=Json.toJson(ProtectionApplication(
-    protectionType = "IP2016",
-    postADayBenefitCrystallisationEvents = Some(100000.00),
-    preADayPensionInPayment = Some(100000.00),
-    uncrystallisedRights = Some(200000.00),
-    nonUKRights = Some(800000.00),
-    relevantAmount = Some(1200000.00)
-  )).as[JsObject]
+  val ip2016ApplicationRequestBody=Json.parse(
+    s"""
+       | {
+       |   "protectionType": "IP2016",
+       |   "postADayBenefitCrystallisationEvents": 100000.00,
+       |   "preADayPensionInPayment": 100000.00,
+       |   "uncrystallisedRights": 200000.00,
+       |   "nonUKRights": 800000.00,
+       |   "relevantAmount": 1200000.00
+       | }
+     """.stripMargin).as[JsObject]
+
+
+  val ip2016AmendmentRequestBody= Json.parse(
+    s"""
+       |{
+       |  "protectionType": "IP2016",
+       |  "version": 1,
+       |  "status": "Open",
+       |  "postADayBenefitCrystallisationEvents": 100000.00,
+       |  "preADayPensionInPayment": 100000.00,
+       |  "uncrystallisedRights": 200000.00,
+       |  "nonUKRights": 800000.00,
+       |  "relevantAmount": 1200000.00
+       |  }
+     """.stripMargin).as[JsObject]
 
   val ip2016ApplicationRequestWithPensionDebitsBody=Json.toJson(ProtectionApplication(
     protectionType = "IP2016",
@@ -159,8 +180,8 @@ class TransformSpec extends UnitSpec{
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
-      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
-      topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
+      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe testProtectionId
+      topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       topLevelFields.get("protectionType").get.as[JsString].value shouldBe "FP2016"
       topLevelFields.get("certificateDate").get.as[JsString].value shouldBe "2015-05-22T12:22:59"
       topLevelFields.get("status").get.as[JsString].value shouldBe "Open"
@@ -177,8 +198,8 @@ class TransformSpec extends UnitSpec{
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("protectionType").get.as[JsString].value shouldBe "IP2014"
-      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
-      topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe 1
+      topLevelFields.get("protectionID").get.as[JsNumber].value.toInt shouldBe testProtectionId
+      topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       topLevelFields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       topLevelFields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
     }
@@ -187,7 +208,7 @@ class TransformSpec extends UnitSpec{
   "A valid received IP2016 protection application request" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
       val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestBody)
-      println("==> " + npsRequestBody)
+      println("APPLY transformed nps request body ==> " + npsRequestBody)
       val npsTopLevelFields=npsRequestBody.get.value
       npsTopLevelFields.size shouldBe 2
       npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
@@ -196,6 +217,29 @@ class TransformSpec extends UnitSpec{
       val protectionFields = protection.get.as[JsObject].value
       protectionFields.size shouldBe 6
       protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
+      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
+      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
+      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
+      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
+    }
+  }
+
+  "A valid received IP2016 protection amendment request" should {
+    "transform to a valid NPS Amend Lifetime Allowance request body" in {
+      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, Some(testProtectionId), ip2016AmendmentRequestBody)
+      println("AMEND transformed nps request body ==> " + npsRequestBody)
+      val npsTopLevelFields=npsRequestBody.get.value
+      npsTopLevelFields.size shouldBe 2
+      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
+      val protection=npsTopLevelFields.get("protection")
+      protection.isDefined shouldBe true
+      val protectionFields = protection.get.as[JsObject].value
+      protectionFields.size shouldBe 9
+      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
+      protectionFields.get("id").get.as[JsNumber].value.toInt shouldBe testProtectionId
+      protectionFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
+      protectionFields.get("status").get.as[JsNumber].value.toInt shouldBe 1
       protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
       protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
       protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
@@ -259,8 +303,8 @@ class TransformSpec extends UnitSpec{
       protections.size shouldBe 2
 
       val p1Fields=protections(0).as[JsObject].value
-      p1Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
-      p1Fields.get("version").get.as[JsNumber].value.toInt shouldBe 1
+      p1Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe testProtectionId
+      p1Fields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       p1Fields.get("protectionType").get.as[JsString].value shouldBe "FP2016"
       p1Fields.get("certificateDate").get.as[JsString].value shouldBe "2015-05-22T12:22:59"
       p1Fields.get("status").get.as[JsString].value shouldBe "Open"
@@ -270,8 +314,8 @@ class TransformSpec extends UnitSpec{
 
       val p2Fields = protections(1).as[JsObject].value
       p2Fields.get("protectionType").get.as[JsString].value shouldBe "IP2014"
-      p2Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe 1
-      p2Fields.get("version").get.as[JsNumber].value.toInt shouldBe 1
+      p2Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe testProtectionId + 1
+      p2Fields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       p2Fields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       p2Fields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
     }

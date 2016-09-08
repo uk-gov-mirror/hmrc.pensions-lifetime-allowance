@@ -19,13 +19,14 @@ package model
 import play.api.libs.json.Json
 
 case class ProtectionAmendment (
-  protectionType: String,
-  protectionStatus: Option[String], // revisit : mandatory field on HOD API spec, but no obvious reason why
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
+  protectionType: String,  // must be either "IP2014" or "IP2016"
+  version: Int, // version of protection to update
+  status: String, // status of protection to update
+  relevantAmount: Double,
+  preADayPensionInPayment: Double,
+  postADayBenefitCrystallisationEvents: Double,
+  uncrystallisedRights: Double,
+  nonUKRights: Double,
   pensionDebits: Option[List[PensionDebit]] = None)
 
 object ProtectionAmendment {

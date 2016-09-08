@@ -60,7 +60,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
   val invalidApplicationBody = Json.parse(
     """
       |{
-      |  "type" : "FP2016"
+      |  "type" : 100000
       |}
     """.stripMargin)
 

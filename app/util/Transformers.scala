@@ -66,23 +66,6 @@ object Transformers {
       (__ \ "pensionDebits").json.put { pdArray }
     } getOrElse { Reads.pure(Json.obj()) }
   }
-  private def putNpsProtectionIdIfExists(protectionId: Option[Int]): Reads[JsObject] = {
-    protectionId.map { id =>
-      (__ \ "id").json.put { JsNumber(id) }
-    } getOrElse { Reads.pure(Json.obj()) }
-  }
-
-  // create NPS protection object from MDTP request
-  private def mdtpToNpsProtection(protectionId: Option[Int]) =
-    ((rename("protectionType", "type") andThen string2Int("type", protectionTypes)) and
-      renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and
-      putNpsProtectionIdIfExists(protectionId) and
-      copyIfExists("version") and
-      (copyIfExists("status") andThen string2IntIfExists("status", protectionStatuses)) and
-      copyIfExists("preADayPensionInPayment") and
-      copyIfExists("uncrystallisedRights") and
-      copyIfExists("nonUKRights") and
-      copyIfExists("relevantAmount") reduce)
 
   // following builds NPS request with nino and protection object (but not with pension debits)
   private def insertNinoAndProtectionObject(ninoWithoutSuffix: String) = __.json.pickBranch(
@@ -103,11 +86,32 @@ object Transformers {
       protectionId: Option[Int],
       mdtpRequestJson: JsObject): JsResult[JsObject] = {
 
+    // put the protection ID to the result, if set
+    def putNpsProtectionIdIfExists: Reads[JsObject] = {
+      protectionId.map { id =>
+        (__ \ "id").json.put { JsNumber(id) }
+      } getOrElse { Reads.pure(Json.obj()) }
+    }
+
+    // put all protection details except pension debits
+    def putNonPensionDebitProtectionDetails =
+      ((rename("protectionType", "type") andThen string2Int("type", protectionTypes) and
+       (copyIfExists("status") andThen string2IntIfExists("status", protectionStatuses)) and
+       copyIfExists("version") and
+       copyIfExists("relevantAmount") and
+       renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and
+       copyIfExists("preADayPensionInPayment") and
+       copyIfExists("uncrystallisedRights") and
+       copyIfExists("nonUKRights")  and
+       putNpsProtectionIdIfExists) reduce)
+
     val npsPensionDebits= mdtpToNpsPensionDebitListFrom(mdtpRequestJson)
 
+    // this combines pension debit an non-pension debit details to produce the overall result, which also setting the nino and
+    // moving the protection details into a protection sub-object
     val npsRequestFromApplyOrAmend =
       (putNpsPensionDebitsIfExist(npsPensionDebits) and
-      (mdtpToNpsProtection(protectionId) andThen insertNinoAndProtectionObject(ninoWithoutSuffix)) reduce)
+      (putNonPensionDebitProtectionDetails andThen insertNinoAndProtectionObject(ninoWithoutSuffix)) reduce)
 
     mdtpRequestJson.transform(npsRequestFromApplyOrAmend)
   }
@@ -180,7 +184,6 @@ object Transformers {
 
   /**
     * Transform received response to Read Protections request from NPS into service response
-    *
     */
   def transformReadResponseBody(ninoSuffix: Char, npsResponseJson: JsObject): JsResult[JsObject] = {
 
