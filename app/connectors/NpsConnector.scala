@@ -94,7 +94,7 @@ trait NpsConnector {
 
   def amendProtection(nino: String,id: Int, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getAmendUrl(nino, id)
-    val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
+    val responseFut = put(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { response =>
       val auditEvent = new NPSAmendLTAEvent(nino=nino, id = id, npsRequestBodyJs=body, npsResponseBodyJs = response.json.as[JsObject], statusCode = response.status, path = requestUrl)
@@ -125,6 +125,10 @@ trait NpsConnector {
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     http.POST[JsValue, HttpResponse](requestUrl, body)
+  }
+
+  def put(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    http.PUT[JsValue, HttpResponse](requestUrl, body)
   }
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {

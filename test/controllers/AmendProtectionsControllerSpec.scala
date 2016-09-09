@@ -131,7 +131,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
-      val result: Future[Result] = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result: Future[Result] = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(OK)
     }
   }
@@ -147,7 +147,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = invalidAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(BAD_REQUEST)
     }
   }
@@ -163,7 +163,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(INTERNAL_SERVER_ERROR)
     }
   }
@@ -179,7 +179,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(INTERNAL_SERVER_ERROR)
     }
   }
@@ -196,7 +196,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(SERVICE_UNAVAILABLE)
     }
   }
@@ -212,7 +212,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
       status(result) must be(UNAUTHORIZED)
     }
 
@@ -227,7 +227,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
           headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
           body = validAmendBody)
 
-        val result = testAmendController.amendProtection(testNino, testProtectionId).apply(fakeRequest)
+        val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
         status(result) must be(BAD_REQUEST)
       }
 
@@ -242,7 +242,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
             headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
             body = validAmendBody)
 
-          val result = testAmendController.amendProtection(testNino,testProtectionId).apply(fakeRequest)
+          val result = testAmendController.amendProtection(testNino,testProtectionId.toString).apply(fakeRequest)
           status(result) must be(INTERNAL_SERVER_ERROR)
         }
       }
