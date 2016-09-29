@@ -19,18 +19,20 @@ package controllers
 import java.util.Random
 
 import connectors._
+import org.apache.http.HttpEntity
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Matchers
 import org.mockito.Mockito._
+import play.api.libs.iteratee.{Enumeratee, Enumerator, Iteratee}
 import play.api.mvc.Results._
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.play.http.{Upstream5xxResponse, Upstream4xxResponse, HeaderCarrier}
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import play.api.test.Helpers
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
@@ -49,58 +51,82 @@ class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with WithFakeApp
   def testCitizenRecordCheck(nino: String): testProtectionsActions.WithCitizenRecordCheckAction = testProtectionsActions.WithCitizenRecordCheckAction(nino)
 
   "test Citizen Record search found" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(Ok))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(Ok))
     val resultStatus = await(result)
     resultStatus shouldBe Ok
   }
 
   "test Citizen Record Not Found" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordNotFound))
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordNotFound))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
-    val resultStatus = await(result)
-    resultStatus shouldBe NotFound
+    val result: Future[Result] = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val resultStatus: Result = await(result)
+    val expectedResult = NotFound(s"Citizen Record Check: Not Found for '$testNino'")
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
+
   }
 
   "test Citizen Record Locked" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordLocked))
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordLocked))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
-    resultStatus shouldBe Locked
+    val expectedResult = Locked(s"Citizen Record Check: Locked for '$testNino'")
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
   }
 
-  "test Citizen Record search resulted in a 4xx response" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecordOther4xxResponse(new Upstream4xxResponse("",400,400))))
+  "test Citizen Record search resulted in a 400 response" in {
+    val errorString = "Mock 400 Error"
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOther4xxResponse(new Upstream4xxResponse(errorString, 400, 400))))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
-    resultStatus shouldBe BadRequest
+    val expectedResult = BadRequest(s"Citizen Record Check: 400 response for '$testNino'\nResponse: $errorString")
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
   }
 
   "test Citizen Record search resulted in a 500 response" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",500,500))))
+    val errorString = "Mock 500 Error"
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse(errorString, 500, 500))))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
-    resultStatus shouldBe InternalServerError
+    val expectedResult = InternalServerError(s"Citizen Record Check: Upstream 500 response for '$testNino'\nResponse: $errorString")
+    info(bodyOf(resultStatus))
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
   }
 
   "test Citizen Record search resulted in a 503 response" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",503,503))))
+    val errorString = "Mock 503 Error"
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse(errorString, 503, 503))))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
-    resultStatus shouldBe GatewayTimeout
+    val expectedResult = GatewayTimeout(s"Citizen Record Check: Upstream 503 response for '$testNino'\nResponse: $errorString")
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
   }
 
   "test Citizen Record search resulted in a 5xx response" in {
-    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(),Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse("",501,501))))
+    val errorString = "Mock 501 Error"
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecord5xxResponse(new Upstream5xxResponse(errorString, 501, 501))))
 
-    val result= testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
-    resultStatus shouldBe InternalServerError
+    val expectedResult = InternalServerError(s"Citizen Record Check: Upstream 501 response for '$testNino'\nResponse: $errorString")
+
+    bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
+    resultStatus.header.status shouldBe expectedResult.header.status
   }
 }
