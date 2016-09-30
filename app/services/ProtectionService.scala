@@ -51,7 +51,7 @@ trait ProtectionService {
   }
 
 
-  def amendProtection(nino: String, protectionId: Integer, amendmentRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+  def amendProtection(nino: String, protectionId: Long, amendmentRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
     val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
       ninoWithoutSuffix,

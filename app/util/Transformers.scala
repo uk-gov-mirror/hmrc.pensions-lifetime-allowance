@@ -83,7 +83,7 @@ object Transformers {
     */
   def transformApplyOrAmendRequestBody(
       ninoWithoutSuffix: String,
-      protectionId: Option[Int],
+      protectionId: Option[Long],
       mdtpRequestJson: JsObject): JsResult[JsObject] = {
 
     // put the protection ID to the result, if set
@@ -133,7 +133,7 @@ object Transformers {
     def copyToTopLevelIfExists(fieldName: String) = copyToTopLevel(fieldName) orElse Reads.pure(Json.obj())
 
     def copyProtectionDetailsToTopLevel: Reads[JsObject] =
-      ( copyToTopLevelIfExists("id") andThen renameIfExists("id","protectionID") and
+       copyToTopLevelIfExists("id") andThen renameIfExists("id","protectionID") and
         copyToTopLevelIfExists("version") and
         (copyToTopLevel("type") andThen rename("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
         (copyToTopLevelIfExists("status") andThen int2StringIfExists("status", protectionStatuses)) and
@@ -148,7 +148,7 @@ object Transformers {
         copyToTopLevelIfExists("pensionDebitTotalAmount") and
         copyToTopLevelIfExists("protectedAmount") and
         (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
-        copyToTopLevelIfExists("protectionReference")  reduce)
+        copyToTopLevelIfExists("protectionReference")  reduce
 
     def readCertificateDateOpt = (__ \ "protection" \ "certificateDate").readNullable[String]
     def readCertificateTimeOpt = (__ \ "protection" \ "certificateTime").readNullable[String]

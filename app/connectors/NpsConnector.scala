@@ -67,7 +67,7 @@ trait NpsConnector {
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
   }
 
-  def getAmendUrl(nino: String, id: Int): String = {
+  def getAmendUrl(nino: String, id: Long): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection/${id}"
   }
@@ -92,7 +92,7 @@ trait NpsConnector {
     }
   }
 
-  def amendProtection(nino: String,id: Int, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+  def amendProtection(nino: String,id: Long, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getAmendUrl(nino, id)
     val responseFut = put(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 

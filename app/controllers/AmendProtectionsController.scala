@@ -40,8 +40,8 @@ trait AmendProtectionsController extends BaseController {
 
   def amendProtection(nino: String, id: String) = WithCitizenRecordCheck(nino).async(BodyParsers.parse.json) { implicit request =>
 
-    val protectionIdOpt: Option[Int] = try {
-      Some(id.toInt)
+    val protectionIdOpt: Option[Long] = try {
+      Some(id.toLong)
     } catch {
       case ex: NumberFormatException => None
     }

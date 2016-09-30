@@ -27,7 +27,7 @@ import uk.gov.hmrc.time.DateTimeUtils
 
 class NPSAmendLTAEvent(
     nino: String,
-    id: Int,
+    id: Long,
     npsRequestBodyJs: JsObject,
     npsResponseBodyJs: JsObject,
     statusCode: Int,
