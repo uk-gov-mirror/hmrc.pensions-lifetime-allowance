@@ -19,7 +19,7 @@ package connectors
 import util.NinoHelper
 import config.WSHttp
 import config.MicroserviceAuditConnector
-import events.NPSCreateLTAEvent
+import events.{NPSBaseLTAEvent,NPSCreateLTAEvent,NPSAmendLTAEvent}
 import model.{Error,HttpResponseDetails}
 
 import play.api.libs.json._
@@ -67,6 +67,11 @@ trait NpsConnector {
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
   }
 
+  def getAmendUrl(nino: String, id: Long): String = {
+    val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
+    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection/${id}"
+  }
+
   def getReadUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protections"
@@ -78,33 +83,38 @@ trait NpsConnector {
 
   def applyForProtection(nino: String, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getApplyUrl(nino)
-    val requestTime = DateTimeUtils.now
-
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    responseFut map { expectedResponse =>
-      handleExpectedApplyResponse(requestUrl,nino,requestTime, body,expectedResponse)
+    responseFut map { response =>
+      val responseBody =  response.json.as[JsObject]
+      val auditEvent = new NPSCreateLTAEvent(nino=nino, npsRequestBodyJs=body, npsResponseBodyJs = responseBody, statusCode = response.status, path = requestUrl)
+      handleAuditableResponse(nino, response, Some(auditEvent))
     }
   }
 
-  def handleExpectedApplyResponse(
-      requestUrl: String,
-      nino: String,
-      requestTime: org.joda.time.DateTime,
-      requestBody: JsObject,
-      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+  def amendProtection(nino: String,id: Long, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+    val requestUrl = getAmendUrl(nino, id)
+    val responseFut = put(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
-    val responseBody  = response.json.as[JsObject]
-    val protType = (requestBody \ "protection" \ "type").as[JsNumber].value.toInt
-    val protStatus = (responseBody \ "protection").as[JsObject].fields.find(_._1 == "status").map(_._2.as[JsNumber].value.toInt)
-    val createLTAEvent = new NPSCreateLTAEvent(nino=nino, statusCode = response.status, path=requestUrl,protectionType = protType, protectionStatus = protStatus)
-    Logger.debug("Created audit event: " + createLTAEvent)
-    audit.sendEvent(createLTAEvent)
+    responseFut map { response =>
+      val auditEvent = new NPSAmendLTAEvent(nino=nino, id = id, npsRequestBodyJs=body, npsResponseBodyJs = response.json.as[JsObject], statusCode = response.status, path = requestUrl)
+      handleAuditableResponse(nino, response, Some(auditEvent))
+    }
+  }
+
+  def handleAuditableResponse(nino: String, response: HttpResponse, auditEvent: Option[NPSBaseLTAEvent])(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails  =
+  {
+    val responseBody =  response.json.as[JsObject]
+    val httpStatus = response.status
+
+    Logger.debug(s"Created audit event: ${auditEvent.getOrElse("<None>")}")
+    auditEvent.foreach { audit.sendEvent(_) }
+
     // assertion: nino returned in response must be the same as that sent in the request
-    val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
+    val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
-    if (responseNino==ninoWithoutSuffix) {
-      HttpResponseDetails(response.status, JsSuccess(responseBody))
+    if (responseNino == ninoWithoutSuffix) {
+      HttpResponseDetails(httpStatus, JsSuccess(responseBody))
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
@@ -115,6 +125,10 @@ trait NpsConnector {
 
   def post(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     http.POST[JsValue, HttpResponse](requestUrl, body)
+  }
+
+  def put(requestUrl: String, body: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    http.PUT[JsValue, HttpResponse](requestUrl, body)
   }
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {

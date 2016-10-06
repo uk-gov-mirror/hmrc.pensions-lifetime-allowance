@@ -3,5 +3,6 @@
 POST       /individuals/:nino/protections       controllers.CreateProtectionsController.applyForProtection(nino: String)
 GET        /individuals/:nino/protections/count controllers.ReadProtectionsController.readExistingProtectionsCount(nino: String)
 GET        /individuals/:nino/protections       controllers.ReadProtectionsController.readExistingProtections(nino: String)
+PUT        /individuals/:nino/protections/:id   controllers.AmendProtectionsController.amendProtection(nino: String, id: String)
 
 

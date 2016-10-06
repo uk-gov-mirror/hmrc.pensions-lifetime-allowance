@@ -25,20 +25,19 @@ import uk.gov.hmrc.play.http._
 import play.api.libs.json.{JsObject, JsPath}
 import uk.gov.hmrc.time.DateTimeUtils
 
-class NPSCreateLTAEvent(
+class NPSAmendLTAEvent(
     nino: String,
+    id: Long,
     npsRequestBodyJs: JsObject,
     npsResponseBodyJs: JsObject,
     statusCode: Int,
     path: String)(implicit hc: HeaderCarrier)
   extends NPSBaseLTAEvent(
-    ltaAuditType = "CreateAllowance",
-    transactionName="create-pensions-lifetime-allowance",
+    ltaAuditType = "AmendAllowance",
+    transactionName="amend-pensions-lifetime-allowance",
     nino = nino,
     npsRequestBodyJs = npsRequestBodyJs,
     npsResponseBodyJs = npsResponseBodyJs,
     statusCode=statusCode,
     path = path,
-    extraDetail = Map())
-
-
+    extraDetail = Map("protectionId" -> id.toString))
