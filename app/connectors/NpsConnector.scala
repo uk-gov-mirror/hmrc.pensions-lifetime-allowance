@@ -69,7 +69,7 @@ trait NpsConnector {
 
   def getAmendUrl(nino: String, id: Long): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
-    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection/${id}"
+    serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protections/${id}"
   }
 
   def getReadUrl(nino: String): String = {
