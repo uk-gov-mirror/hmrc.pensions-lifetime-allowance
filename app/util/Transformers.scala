@@ -103,6 +103,7 @@ object Transformers {
        copyIfExists("preADayPensionInPayment") and
        copyIfExists("uncrystallisedRights") and
        copyIfExists("nonUKRights")  and
+       copyIfExists("pensionDebitTotalAmount") and
        putNpsProtectionIdIfExists) reduce)
 
     val npsPensionDebits= mdtpToNpsPensionDebitListFrom(mdtpRequestJson)

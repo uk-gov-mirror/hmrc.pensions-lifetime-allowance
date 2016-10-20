@@ -27,6 +27,7 @@ case class ProtectionAmendment (
   postADayBenefitCrystallisationEvents: Double,
   uncrystallisedRights: Double,
   nonUKRights: Double,
+  pensionDebitTotalAmount: Option[Double] = None,
   pensionDebits: Option[List[PensionDebit]] = None)
 
 object ProtectionAmendment {
