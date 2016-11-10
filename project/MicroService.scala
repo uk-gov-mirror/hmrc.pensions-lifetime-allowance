@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import play.routes.compiler.StaticRoutesGenerator
 import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
