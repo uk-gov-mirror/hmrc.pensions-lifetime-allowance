@@ -45,7 +45,7 @@ private object AppDependencies {
   private val scalaTestVersion = "2.2.6"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.8.3"
-  private val scalatestPlusPlayVersion = "1.2.0"
+//  private val scalatestPlusPlayVersion = "1.5.1"
 
   val compile = Seq(
 
@@ -69,8 +69,7 @@ private object AppDependencies {
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
-        "org.scalatestplus" %% "play" % scalatestPlusPlayVersion % scope,
-        "org.pegdown" % "pegdown" % "1.6.0" % scope,
+        "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope
       )
@@ -85,8 +84,8 @@ private object AppDependencies {
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % "2.2.6" % scope,
-        "org.scalatestplus" %% "play" % scalatestPlusPlayVersion % scope,
-        "org.pegdown" % "pegdown" % "1.6.0" % scope,
+        "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
+        "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope
       )
