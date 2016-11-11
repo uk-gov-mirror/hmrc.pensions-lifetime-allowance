@@ -128,7 +128,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest: FakeRequest[JsValue] = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
       val result: Future[Result] = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -144,7 +144,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = invalidAmendBody)
 
       val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -160,7 +160,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
       val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -176,7 +176,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
       val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -193,7 +193,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
       val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -209,7 +209,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
-        headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
         body = validAmendBody)
 
       val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -224,7 +224,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         val fakeRequest = FakeRequest(
           method = "PUT",
           uri = "",
-          headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+          headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
           body = validAmendBody)
 
         val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
@@ -239,7 +239,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
           val fakeRequest = FakeRequest(
             method = "PUT",
             uri = "",
-            headers = FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+            headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
             body = validAmendBody)
 
           val result = testAmendController.amendProtection(testNino,testProtectionId.toString).apply(fakeRequest)

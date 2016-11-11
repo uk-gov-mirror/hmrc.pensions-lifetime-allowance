@@ -18,29 +18,29 @@ package controllers
 
 import java.util.Random
 
+import akka.stream.Materializer
 import connectors._
-import org.apache.http.HttpEntity
-import org.scalatest.mock.MockitoSugar
 import org.mockito.Matchers
 import org.mockito.Mockito._
-import play.api.libs.iteratee.{Enumeratee, Enumerator, Iteratee}
+import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.play.OneServerPerSuite
 import play.api.mvc.Results._
 import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import play.api.test.Helpers
+import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
+class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with OneServerPerSuite {
 
   val ninoGenerator = new Generator(new Random())
   val testNino = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
   implicit val hc = HeaderCarrier()
+  implicit lazy val materializer: Materializer = app.materializer
 
   val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
 
