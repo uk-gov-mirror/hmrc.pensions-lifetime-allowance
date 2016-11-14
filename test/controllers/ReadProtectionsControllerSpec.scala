@@ -197,6 +197,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyEmptyProtections))))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
+
           status(result) must be(OK)
           (contentAsJson(result) \ "count").get must be(JsNumber(0))
         }
@@ -207,6 +208,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyNoProtections))))
 
           val result: Future[Result] = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
+
           status(result) must be(OK)
           (contentAsJson(result) \ "count").get must be(JsNumber(0))
         }
@@ -217,7 +219,6 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBody))))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
-          info(contentAsJson(result).toString())
           status(result) must be(OK)
           (contentAsJson(result) \ "count").get must be(JsNumber(1))
         }
