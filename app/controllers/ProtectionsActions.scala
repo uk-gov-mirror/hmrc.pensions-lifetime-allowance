@@ -33,12 +33,12 @@ trait ProtectionsActions{
   case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
 
     def logErrorAndRespond(err: String, status: Status): Future[Result] = {
-      Logger.error(err)
+      Logger.warn(err)
       Future.successful(status(err))
     }
 
     def logErrorAndRespondFromUpstreamResponse(err: String, status: Status, upstreamResponse: String): Future[Result] = {
-      Logger.error(upstreamResponse)
+      Logger.warn(upstreamResponse)
       Future.successful(status(s"$err\nResponse: $upstreamResponse"))
     }
 

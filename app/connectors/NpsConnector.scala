@@ -118,7 +118,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }
@@ -159,7 +159,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }

@@ -18,12 +18,14 @@ package services
 
 import connectors.NpsConnector
 import play.api.libs.json.{JsObject, JsResult}
-import uk.gov.hmrc.play.http.{HeaderCarrier}
+import uk.gov.hmrc.play.http.HeaderCarrier
 import play.api.http.Status
 
 import scala.concurrent.{ExecutionContext, Future}
 import util.{NinoHelper, Transformers}
 import model.HttpResponseDetails
+import play.mvc.BodyParser.Json
+import play.api.libs.json.Json.prettyPrint
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -57,6 +59,9 @@ trait ProtectionService {
       ninoWithoutSuffix,
       Some(protectionId),
       amendmentRequestBody)
+
+    println(s"\n\n${prettyPrint(npsRequestBody.get)}")
+
     npsRequestBody.fold(
       errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
       req => nps.amendProtection(nino, protectionId, req) map { npsResponse =>
@@ -73,6 +78,7 @@ trait ProtectionService {
 
     nps.readExistingProtections(nino) map { npsResponse =>
         val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }
+        println(s"${prettyPrint(npsResponse.body.get)}")
         HttpResponseDetails(npsResponse.status, transformedResponseJs)
       }
   }
