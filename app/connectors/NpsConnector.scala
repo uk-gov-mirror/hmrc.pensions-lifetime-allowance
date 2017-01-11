@@ -61,7 +61,7 @@ trait NpsConnector {
     "Content-Type" -> "application/json",
     //"Authorization" -> s"Bearer $serviceAccessToken",
     "Environment" -> serviceEnvironment).copy(authorization = Some(Authorization(s"Bearer $serviceAccessToken")))
-  
+
   def getApplyUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
@@ -118,7 +118,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }
@@ -159,7 +159,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }
