@@ -100,7 +100,6 @@ class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with OneServerPe
     val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(NotModified))
     val resultStatus = await(result)
     val expectedResult = InternalServerError(s"Citizen Record Check: Upstream 500 response for '$testNino'\nResponse: $errorString")
-    info(bodyOf(resultStatus))
 
     bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
     resultStatus.header.status shouldBe expectedResult.header.status
