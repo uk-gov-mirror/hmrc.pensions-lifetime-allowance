@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
   }
 
   "ReadProtectionsController" should {
-    "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service to a read protecions request by passing it back to the caller" in {
+    "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service to a read protections request by passing it back to the caller" in {
       when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(500, JsSuccess(successfulReadResponseBody))))
 
@@ -189,6 +189,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
             .thenReturn(Future.successful(model.HttpResponseDetails(200, JsError())))
 
           val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
+          info(status(result).toString)
           status(result) must be(INTERNAL_SERVER_ERROR)
         }
       }

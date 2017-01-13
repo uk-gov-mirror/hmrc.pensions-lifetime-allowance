@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ trait ProtectionsActions{
   case class WithCitizenRecordCheckAction(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
 
     def logErrorAndRespond(err: String, status: Status): Future[Result] = {
-      Logger.error(err)
+      Logger.warn(err)
       Future.successful(status(err))
     }
 
     def logErrorAndRespondFromUpstreamResponse(err: String, status: Status, upstreamResponse: String): Future[Result] = {
-      Logger.error(upstreamResponse)
+      Logger.warn(upstreamResponse)
       Future.successful(status(s"$err\nResponse: $upstreamResponse"))
     }
 

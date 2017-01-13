@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ trait NpsConnector {
     "Content-Type" -> "application/json",
     //"Authorization" -> s"Bearer $serviceAccessToken",
     "Environment" -> serviceEnvironment).copy(authorization = Some(Authorization(s"Bearer $serviceAccessToken")))
-  
+
   def getApplyUrl(nino: String): String = {
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
     serviceUrl + s"/pensions-lifetime-allowance/individual/${ninoWithoutSuffix}/protection"
@@ -118,7 +118,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }
@@ -159,7 +159,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.error(report)
+      Logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }

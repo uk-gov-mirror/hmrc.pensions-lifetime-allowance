@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package services
 
 import connectors.NpsConnector
 import play.api.libs.json.{JsObject, JsResult}
-import uk.gov.hmrc.play.http.{HeaderCarrier}
+import uk.gov.hmrc.play.http.HeaderCarrier
 import play.api.http.Status
 
 import scala.concurrent.{ExecutionContext, Future}
 import util.{NinoHelper, Transformers}
 import model.HttpResponseDetails
+import play.mvc.BodyParser.Json
+import play.api.libs.json.Json.prettyPrint
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -57,6 +59,9 @@ trait ProtectionService {
       ninoWithoutSuffix,
       Some(protectionId),
       amendmentRequestBody)
+
+    println(s"\n\n${prettyPrint(npsRequestBody.get)}")
+
     npsRequestBody.fold(
       errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
       req => nps.amendProtection(nino, protectionId, req) map { npsResponse =>
