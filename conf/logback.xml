@@ -49,8 +49,6 @@
 
     <logger name="org.asynchttpclient" level="INFO"/>
 
-    <logger name="org.asynchttpclient" level="INFO"/>
-
     <logger name="application" level="DEBUG"/>
 
     <logger name="connector" level="INFO">
