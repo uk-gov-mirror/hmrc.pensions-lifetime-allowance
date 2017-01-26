@@ -60,8 +60,6 @@ trait ProtectionService {
       Some(protectionId),
       amendmentRequestBody)
 
-    println(s"\n\n${prettyPrint(npsRequestBody.get)}")
-
     npsRequestBody.fold(
       errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
       req => nps.amendProtection(nino, protectionId, req) map { npsResponse =>
