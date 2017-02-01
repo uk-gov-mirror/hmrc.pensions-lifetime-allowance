@@ -125,7 +125,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       val fakeRequest: FakeRequest[JsValue] = FakeRequest(
         method = "POST",
         uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
       val result: Future[Result] = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -141,7 +141,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = invalidApplicationBody)
 
       val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -157,7 +157,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
       val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -173,7 +173,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
       val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -188,7 +188,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
       val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
       val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -203,7 +203,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
         val fakeRequest = FakeRequest(
           method = "POST",
           uri = "",
-          headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+          headers = FakeHeaders(Seq("content-type" -> "application.json")),
           body = validApplicationBody)
 
         val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
@@ -218,7 +218,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
           val fakeRequest = FakeRequest(
             method = "POST",
             uri = "",
-            headers = FakeHeaders(Seq("content-type" -> "application.json")), //FakeHeaders(Seq("Content-type" -> Seq("application/json"))),
+            headers = FakeHeaders(Seq("content-type" -> "application.json")),
             body = validApplicationBody)
 
           val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
