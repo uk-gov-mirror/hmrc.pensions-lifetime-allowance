@@ -251,6 +251,7 @@ class TransformSpec extends UnitSpec{
   "A valid received IP2016 protection application request with pension debits" should {
     "transform to a valid NPS Create Lifetime Allowance request body" in {
       val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestWithPensionDebitsBody)
+
       val npsTopLevelFields=npsRequestBody.get.value
       npsTopLevelFields.size shouldBe 3
       npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
@@ -281,6 +282,7 @@ class TransformSpec extends UnitSpec{
   "A valid received Read LTA Protections response body with an empty protections array" should {
     "tranform to a valid NPS Read protections" in {
       val responseBody = transformReadResponseBody(testNinoSuffixChar.get, emptyReadProtectionsNPSResponseBody)
+
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
@@ -291,6 +293,7 @@ class TransformSpec extends UnitSpec{
   "A valid received Read LTA Protections response body with a non-empty protections array" should {
     "tranform to a valid NPS Read protections" in {
       val responseBody = transformReadResponseBody(testNinoSuffixChar.get, readProtectionsNPSResponseBody)
+
       val topLevelFields = responseBody.get.value
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"

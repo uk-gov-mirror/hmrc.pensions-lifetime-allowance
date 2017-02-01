@@ -19,9 +19,7 @@ package connectors
 import util.NinoHelper
 import config.WSHttp
 import play.api.http.Status._
-
-import play.api.{LoggerLike, Logger}
-
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HttpResponse, _}
 
@@ -60,7 +58,7 @@ trait CitizenDetailsConnector {
       http.GET[HttpResponse](requestUrl) map {
         _ => CitizenRecordOK
       } recover {
-        case e: Upstream4xxResponse if (e.upstreamResponseCode == LOCKED) => CitizenRecordLocked
+        case e: Upstream4xxResponse if e.upstreamResponseCode == LOCKED => CitizenRecordLocked
         case e: NotFoundException => CitizenRecordNotFound
         case e: Upstream4xxResponse => CitizenRecordOther4xxResponse(e)
         case e: Upstream5xxResponse => CitizenRecord5xxResponse(e)

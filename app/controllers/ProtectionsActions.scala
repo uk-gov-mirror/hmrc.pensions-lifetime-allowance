@@ -45,8 +45,7 @@ trait ProtectionsActions{
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
       implicit val hc: HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers)
 
-      citizenDetailsConnector.checkCitizenRecord(nino) flatMap { citizenCheckResult =>
-        citizenCheckResult match {
+      citizenDetailsConnector.checkCitizenRecord(nino) flatMap {
           case CitizenRecordOK                  => block(request)
           case CitizenRecordNotFound            => logErrorAndRespond(s"Citizen Record Check: Not Found for '$nino'", NotFound)
           case CitizenRecordLocked              => logErrorAndRespond(s"Citizen Record Check: Locked for '$nino'", Locked)
@@ -54,7 +53,6 @@ trait ProtectionsActions{
           case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503   => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream 503 response for '$nino'", GatewayTimeout, e.message)
           case CitizenRecord5xxResponse(e)      => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream ${e.upstreamResponseCode} response for '$nino'", InternalServerError, e.message)
           case _                                => logErrorAndRespond("err", InternalServerError)
-        }
       }
     }
   }

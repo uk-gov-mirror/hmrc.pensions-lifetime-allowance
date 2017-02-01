@@ -18,6 +18,7 @@ package controllers
 
 import java.util.Random
 
+import akka.stream.Materializer
 import connectors.NpsConnector
 import org.mockito.Matchers
 import org.mockito.Mockito._
@@ -26,13 +27,11 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.libs.json.{JsError, JsObject, JsSuccess, Json}
 import play.api.mvc.{ActionBuilder, Request, Result}
-
 import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.play.http.HeaderCarrier
 import util.NinoHelper
-
 import play.api.libs.json.JsNumber
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +40,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
-
+  implicit lazy val materializer: Materializer = app.materializer
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
   val testNino = randomNino
@@ -199,8 +198,9 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyEmptyProtections))))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
+
           status(result) must be(OK)
-          (contentAsJson(result) \ "count") must be(JsNumber(0))
+          (contentAsJson(result) \ "count").get must be(JsNumber(0))
         }
       }
       "ReadProtectionsController" should {
@@ -208,9 +208,10 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
           when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyNoProtections))))
 
-          val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
+          val result: Future[Result] = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
+
           status(result) must be(OK)
-          (contentAsJson(result) \ "count") must be(JsNumber(0))
+          (contentAsJson(result) \ "count").get must be(JsNumber(0))
         }
       }
       "ReadProtectionsController" should {
@@ -220,7 +221,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
           status(result) must be(OK)
-          (contentAsJson(result) \ "count") must be(JsNumber(1))
+          (contentAsJson(result) \ "count").get must be(JsNumber(1))
         }
       }
 

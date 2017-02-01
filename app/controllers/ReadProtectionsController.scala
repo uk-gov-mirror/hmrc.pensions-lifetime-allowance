@@ -18,7 +18,7 @@ package controllers
 
 import model.Error
 import play.api.mvc._
-import play.api.libs.json.{JsArray, JsNumber, JsObject, JsUndefined, JsValue, Json}
+import play.api.libs.json._
 import play.api.mvc.Action
 import play.mvc.Http.Response
 import services.ProtectionService
@@ -63,7 +63,7 @@ trait ReadProtectionsController extends BaseController {
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => {
-          val protectionsArrayJsValue = response.body.get \ "lifetimeAllowanceProtections"
+          val protectionsArrayJsValue = response.body.get \ "lifetimeAllowanceProtections" getOrElse JsNumber(0)
           val count = protectionsArrayJsValue match {
             case protectionsJsArray: JsArray => protectionsJsArray.value.size
             case _ => 0

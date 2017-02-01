@@ -18,10 +18,11 @@ package connectors
 
 import java.util.Random
 
+import com.kenshoo.play.metrics.PlayModule
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
@@ -32,6 +33,7 @@ import scala.concurrent.Future
 
 class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFakeApplication with BeforeAndAfter {
 
+  override def bindModules = Seq(new PlayModule)
   val mockHttp = mock[HttpGet]
 
   object testCitizenDetailsConnector extends CitizenDetailsConnector {
