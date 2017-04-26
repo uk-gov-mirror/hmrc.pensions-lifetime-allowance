@@ -16,20 +16,16 @@
 
 package connectors
 
+import config.{MicroserviceAuditConnector, WSHttp}
+import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
+import model.{Error, HttpResponseDetails}
+import play.api.Logger
 import util.NinoHelper
-import config.WSHttp
-import config.MicroserviceAuditConnector
-import events.{NPSBaseLTAEvent,NPSCreateLTAEvent,NPSAmendLTAEvent}
-import model.{Error,HttpResponseDetails}
-
 import play.api.libs.json._
-import play.api.{LoggerLike, Logger}
-
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HttpResponse, _}
 import uk.gov.hmrc.play.http.logging.Authorization
-
+import uk.gov.hmrc.play.http.{HttpResponse, _}
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,6 +96,11 @@ trait NpsConnector {
       val auditEvent = new NPSAmendLTAEvent(nino=nino, id = id, npsRequestBodyJs=body, npsResponseBodyJs = response.json.as[JsObject], statusCode = response.status, path = requestUrl)
       handleAuditableResponse(nino, response, Some(auditEvent))
     }
+  }
+
+  def psaLookup(psaRef: String, ltaRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val requestUrl = s"$serviceUrl/pensions-lifetime-allowance/scheme-administrator/certificate-lookup?pensionSchemeAdministratorCheckReference=$psaRef&lifetimeAllowanceReference=$ltaRef"
+    get(requestUrl)
   }
 
   def handleAuditableResponse(nino: String, response: HttpResponse, auditEvent: Option[NPSBaseLTAEvent])(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails  =
