@@ -17,8 +17,6 @@
 package controllers
 
 import connectors.NpsConnector
-import model.{Error, HttpResponseDetails}
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
