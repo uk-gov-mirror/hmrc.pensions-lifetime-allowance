@@ -17,6 +17,8 @@
 package controllers
 
 import connectors.NpsConnector
+import model.Error
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -40,13 +42,12 @@ trait LookupController extends BaseController {
   }
 
   private def handleErrorResponse(response: HttpResponse): Result = {
-    val error = response.json
+    val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.json}"))
     response.status match {
-      case BAD_REQUEST => BadRequest(error)
       case INTERNAL_SERVER_ERROR => InternalServerError(error)
       case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
       case UNAUTHORIZED => Unauthorized(error)
-      case NOT_FOUND => NotFound(error)
+      case FORBIDDEN => Forbidden(error)
       case _ => InternalServerError(error)
     }
   }

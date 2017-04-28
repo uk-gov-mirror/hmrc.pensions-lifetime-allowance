@@ -24,8 +24,8 @@ import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.Authorization
 import uk.gov.hmrc.play.http._
+import uk.gov.hmrc.play.http.logging.Authorization
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object NpsConnector extends NpsConnector with ServicesConfig {
 
   override val serviceUrl = baseUrl("nps")
+
   override def http = WSHttp
 
   override val audit = MicroserviceAuditConnector
@@ -41,9 +42,11 @@ object NpsConnector extends NpsConnector with ServicesConfig {
   override val serviceEnvironment = getConfString("nps.environment", "")
 
 }
+
 trait NpsConnector {
 
   def http: HttpGet with HttpPost with HttpPut
+
   val serviceUrl: String
 
   val serviceAccessToken: String
@@ -82,34 +85,38 @@ trait NpsConnector {
     val responseFut = post(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { response =>
-      val responseBody =  response.json.as[JsObject]
-      val auditEvent = new NPSCreateLTAEvent(nino=nino, npsRequestBodyJs=body, npsResponseBodyJs = responseBody, statusCode = response.status, path = requestUrl)
+      val responseBody = response.json.as[JsObject]
+      val auditEvent = new NPSCreateLTAEvent(nino = nino, npsRequestBodyJs = body, npsResponseBodyJs = responseBody, statusCode = response.status, path = requestUrl)
       handleAuditableResponse(nino, response, Some(auditEvent))
     }
   }
 
-  def amendProtection(nino: String,id: Long, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+  def amendProtection(nino: String, id: Long, body: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getAmendUrl(nino, id)
     val responseFut = put(requestUrl, body)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { response =>
-      val auditEvent = new NPSAmendLTAEvent(nino=nino, id = id, npsRequestBodyJs=body, npsResponseBodyJs = response.json.as[JsObject], statusCode = response.status, path = requestUrl)
+      val auditEvent = new NPSAmendLTAEvent(nino = nino, id = id, npsRequestBodyJs = body, npsResponseBodyJs = response.json.as[JsObject], statusCode = response.status, path = requestUrl)
       handleAuditableResponse(nino, response, Some(auditEvent))
     }
   }
 
   def psaLookup(psaRef: String, ltaRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val requestUrl = s"$serviceUrl/pensions-lifetime-allowance/scheme-administrator/certificate-lookup?pensionSchemeAdministratorCheckReference=$psaRef&lifetimeAllowanceReference=$ltaRef"
-    get(requestUrl)(addExtraHeaders, ec)
+    get(requestUrl)(addExtraHeaders, ec).map(r => r).recover {
+      case r: Upstream4xxResponse => HttpResponse(r.upstreamResponseCode, Some(Json.toJson(r.message)))
+      case r: Upstream5xxResponse => HttpResponse(r.upstreamResponseCode, Some(Json.toJson(r.message)))
+    }
   }
 
-  def handleAuditableResponse(nino: String, response: HttpResponse, auditEvent: Option[NPSBaseLTAEvent])(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails  =
-  {
-    val responseBody =  response.json.as[JsObject]
+  def handleAuditableResponse(nino: String, response: HttpResponse, auditEvent: Option[NPSBaseLTAEvent])(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+    val responseBody = response.json.as[JsObject]
     val httpStatus = response.status
 
     Logger.debug(s"Created audit event: ${auditEvent.getOrElse("<None>")}")
-    auditEvent.foreach { audit.sendEvent(_) }
+    auditEvent.foreach {
+      audit.sendEvent(_)
+    }
 
     // assertion: nino returned in response must be the same as that sent in the request
     val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")
@@ -138,7 +145,7 @@ trait NpsConnector {
     val responseFut = get(requestUrl)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { expectedResponse =>
-      handleExpectedReadResponse(requestUrl,nino,requestTime,expectedResponse)
+      handleExpectedReadResponse(requestUrl, nino, requestTime, expectedResponse)
     }
   }
 
@@ -147,15 +154,15 @@ trait NpsConnector {
   }
 
   def handleExpectedReadResponse(
-      requestUrl: String,
-      nino: String,
-      requestTime: org.joda.time.DateTime,
-      response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+                                  requestUrl: String,
+                                  nino: String,
+                                  requestTime: org.joda.time.DateTime,
+                                  response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
 
-    val responseBody  = response.json.as[JsObject]
-    val responseNino =  responseBody.value.get("nino").map { n => n.as[String]}.getOrElse("")
+    val responseBody = response.json.as[JsObject]
+    val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")
     val (ninoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(nino)
-    if (responseNino==ninoWithoutSuffix) {
+    if (responseNino == ninoWithoutSuffix) {
       HttpResponseDetails(response.status, JsSuccess(responseBody))
     }
     else {
