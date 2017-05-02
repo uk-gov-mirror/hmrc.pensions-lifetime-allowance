@@ -44,6 +44,8 @@ trait LookupController extends BaseController {
   private def handleErrorResponse(response: HttpResponse): Result = {
     val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.json}"))
     response.status match {
+      case NOT_FOUND => NotFound(error)
+      case BAD_REQUEST => BadRequest(error)
       case INTERNAL_SERVER_ERROR => InternalServerError(error)
       case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
       case UNAUTHORIZED => Unauthorized(error)
