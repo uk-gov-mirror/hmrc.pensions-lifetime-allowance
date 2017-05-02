@@ -32,8 +32,8 @@ object LookupController extends LookupController {
 trait LookupController extends BaseController {
   val npsConnector: NpsConnector
 
-  def lookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async { implicit request =>
-    npsConnector.psaLookup(psaRef, ltaRef).map { response =>
+  def psaLookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async { implicit request =>
+    npsConnector.getPSALookup(psaRef, ltaRef).map { response =>
       response.status match {
         case OK => Ok(response.json)
         case _ => handleErrorResponse(response)

@@ -22,6 +22,7 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
@@ -31,10 +32,13 @@ import scala.concurrent.Future
 class LookupControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   implicit val hc = HeaderCarrier()
-  val mockNpsConnector = mock[NpsConnector]
+  val mockNpsConnector: NpsConnector = mock[NpsConnector]
 
-  val standardHeaders = Seq("Content-type" -> Seq("application/json"))
-  val validExtraHOutboundHeaders = Seq("Environment" -> Seq("local"), "Authorisation" -> Seq("Bearer abcdef12345678901234567890"))
+  val validExtraHOutboundHeaders = Seq("Environment" -> "local", "Authorisation" -> "Bearer abcdef12345678901234567890")
+
+  val validResponse: JsValue = Json.parse(
+    s"""{"pensionSchemeAdministratorCheckReference": "PSA12345678A","ltaType": 7,"psaCheckResult": 1,"relevantAmount": 25000}"""
+  )
 
   object testController extends LookupController {
     override val npsConnector: NpsConnector = mockNpsConnector
@@ -43,21 +47,49 @@ class LookupControllerSpec extends PlaySpec with OneServerPerSuite with MockitoS
   override protected def beforeEach(): Unit = reset(mockNpsConnector)
 
   "Lookup Controller" should {
-    "return 403 when no environment header present" in {
-      when(mockNpsConnector.psaLookup(any(), any())(any(), any()))
+    "return 403 when no environment header present and Forbidden is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(any(), any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse(FORBIDDEN, None)))
 
-      val result = testController.lookup("", "").apply(FakeRequest())
+      val result = testController.psaLookup("", "").apply(FakeRequest())
       status(result) mustBe FORBIDDEN
       contentAsString(result) mustBe "{\"message\":\"NPS request resulted in a response with: HTTP status = 403 body = null\"}"
     }
 
-    "return 401 when no auth header present with body" in {
-      when(mockNpsConnector.psaLookup(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(UNAUTHORIZED, None)))
+    "return 401 when no auth header present with body and Unauthorised is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(UNAUTHORIZED, Some(Json.toJson("Required OAuth credentials not provided")))))
 
-      val result = testController.lookup("", "").apply(FakeRequest())
+      val result = testController.psaLookup("", "").apply(FakeRequest())
       status(result) mustBe UNAUTHORIZED
+      contentAsString(result) mustBe "{\"message\":\"NPS request resulted in a response with: HTTP status = 401 body = \\\"Required OAuth credentials not provided\\\"\"}"
+    }
+
+    "return 500 when Internal Server Error is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, None)))
+
+      val result = testController.psaLookup("", "").apply(FakeRequest().withHeaders(validExtraHOutboundHeaders: _*))
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsString(result) mustBe "{\"message\":\"NPS request resulted in a response with: HTTP status = 500 body = null\"}"
+    }
+
+    "return 503 when Service Unavailable is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(SERVICE_UNAVAILABLE, None)))
+
+      val result = testController.psaLookup("", "").apply(FakeRequest())
+      status(result) mustBe SERVICE_UNAVAILABLE
+      contentAsString(result) mustBe "{\"message\":\"NPS request resulted in a response with: HTTP status = 503 body = null\"}"
+    }
+
+    "return 200 when OK is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(OK, Some(validResponse))))
+
+      val result = testController.psaLookup("", "").apply(FakeRequest())
+      status(result) mustBe OK
+      contentAsString(result) mustBe validResponse.toString
     }
   }
 

@@ -101,7 +101,7 @@ trait NpsConnector {
     }
   }
 
-  def psaLookup(psaRef: String, ltaRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def getPSALookup(psaRef: String, ltaRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val requestUrl = s"$serviceUrl/pensions-lifetime-allowance/scheme-administrator/certificate-lookup?pensionSchemeAdministratorCheckReference=$psaRef&lifetimeAllowanceReference=$ltaRef"
     get(requestUrl)(addExtraHeaders, ec).map(r => r).recover {
       case r: Upstream4xxResponse => HttpResponse(r.upstreamResponseCode, Some(Json.toJson(r.message)))

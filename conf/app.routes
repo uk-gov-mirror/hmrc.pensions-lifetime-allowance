@@ -5,4 +5,4 @@ GET        /individuals/:nino/protections/count controllers.ReadProtectionsContr
 GET        /individuals/:nino/protections       controllers.ReadProtectionsController.readExistingProtections(nino: String)
 PUT        /individuals/:nino/protections/:id   controllers.AmendProtectionsController.amendProtection(nino: String, id: String)
 
-GET        /lookup/:psaRef/:ltaRef              controllers.LookupController.lookup(psaRef, ltaRef)
+GET        /psalookup/:psaRef/:ltaRef              controllers.LookupController.psaLookup(psaRef, ltaRef)
