@@ -101,7 +101,6 @@ object Transformers {
        copyIfExists("relevantAmount") and
        renameIfExists("postADayBenefitCrystallisationEvents", "postADayBCE") and
        copyIfExists("preADayPensionInPayment") and
-       copyIfExists("withdrawnDate") and
        copyIfExists("uncrystallisedRights") and
        copyIfExists("nonUKRights")  and
        copyIfExists("pensionDebitTotalAmount") and
@@ -143,7 +142,6 @@ object Transformers {
         (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("preADayPensionInPayment") and
         copyToTopLevelIfExists("uncrystallisedRights") and
-        copyToTopLevelIfExists("withdrawnDate") and
         copyToTopLevelIfExists("nonUKRights") and
         copyToTopLevelIfExists("pensionDebitAmount") and
         copyToTopLevelIfExists("pensionDebitEnteredAmount") and
@@ -217,7 +215,6 @@ object Transformers {
       (copyIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
       copyIfExists("preADayPensionInPayment") and
       copyIfExists("uncrystallisedRights") and
-      copyIfExists("withdrawnDate") and
       copyIfExists("nonUKRights") and
       copyIfExists("pensionDebitAmount") and
       copyIfExists("pensionDebitEnteredAmount") and
