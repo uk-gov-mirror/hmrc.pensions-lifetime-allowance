@@ -16,12 +16,14 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import model.Error
 import play.api.mvc._
 import play.api.libs.json._
 import play.api.mvc.Action
 import play.mvc.Http.Response
-import services.ProtectionService
+import services.{NewProtectionService, ProtectionService}
 import model.HttpResponseDetails
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -30,6 +32,7 @@ import scala.concurrent.Future
 
 object ReadProtectionsController extends ReadProtectionsController {
   override val protectionService = ProtectionService
+
   override def WithCitizenRecordCheck(nino: String) = ProtectionsActions.WithCitizenRecordCheckAction(nino)
 }
 
@@ -45,7 +48,7 @@ trait ReadProtectionsController extends BaseController {
     * @param nino national insurance number of the individual
     * @return json object full details of the existing protections held fby the individual
     */
-  def readExistingProtections(nino: String) : Action[AnyContent] = WithCitizenRecordCheck(nino).async { implicit request =>
+  def readExistingProtections(nino: String): Action[AnyContent] = WithCitizenRecordCheck(nino).async { implicit request =>
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => Ok(response.body.get)
@@ -59,7 +62,7 @@ trait ReadProtectionsController extends BaseController {
    * @param nino
    * @return a json object with a single field 'count' set to the number of existing protections
    */
-  def readExistingProtectionsCount(nino: String) : Action[AnyContent] = Action.async { implicit request =>
+  def readExistingProtectionsCount(nino: String): Action[AnyContent] = Action.async { implicit request =>
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => {
@@ -75,7 +78,7 @@ trait ReadProtectionsController extends BaseController {
     }
   }
 
-  private def handleErrorResponse(response: HttpResponseDetails, includeResponseDetails: Boolean = false) : Result = {
+  private def handleErrorResponse(response: HttpResponseDetails, includeResponseDetails: Boolean = false): Result = {
     //  unpexected error response handling
     val responseBodyDetails = if (response.body.isSuccess && includeResponseDetails) {
       ", body=" + Json.asciiStringify(response.body.get)
@@ -93,4 +96,14 @@ trait ReadProtectionsController extends BaseController {
       case _ => InternalServerError(error)
     }
   }
+}
+
+class ReadProtectionsControllerClass @Inject()(protectionService: NewProtectionService) {
+
+//  def getProtections(nino: String): Action[AnyContent] = Action.async { implicit request =>
+//    protectionService.getCurrentProtections(nino) map {
+//      result =>
+//    }
+//  }
+
 }

@@ -16,16 +16,19 @@
 
 package services
 
+import javax.inject.Inject
+
 import connectors.NpsConnector
-import play.api.libs.json.{JsObject, JsResult}
-import uk.gov.hmrc.play.http.HeaderCarrier
+import model.{ExistingProtections, HttpResponseDetails}
 import play.api.http.Status
+import play.api.libs.json.{JsObject, JsResult, JsValue, Json}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import util.{NinoHelper, Transformers}
+import play.api.libs.json._
+import play.api.libs.json.Reads._
+import play.api.libs.functional.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
-import util.{NinoHelper, Transformers}
-import model.HttpResponseDetails
-import play.mvc.BodyParser.Json
-import play.api.libs.json.Json.prettyPrint
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -75,9 +78,35 @@ trait ProtectionService {
     val (_, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
 
     nps.readExistingProtections(nino) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformReadResponseBody(lastNinoCharOpt.get, _)
       }
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
+}
+
+class NewProtectionService @Inject()(npsConnector: NpsConnector) {
+
+  def getCurrentProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val ninoWithoutSuffix = nino.dropRight(1)
+    npsConnector.getProtections(ninoWithoutSuffix)
+  }
+
+  def transformCurrentProtectionJson(json: JsValue): Unit = {
+    //Rename type to protection type
+    val jsonModifiers = (__ \ 'protectionType).json.copyFrom((__ \ 'type).json.pick)
+      //Change status number to corresponding text
+      //Change type number to corresponding text
+
+    //Transform the json
+    //json.transform(jsonModifiers)
+  }
+
+
+}
+
+object ProtectionTypes extends Enumeration {
+  val Unknown, FP2016, IP2014, IP2016, Primary, Enhanced, Fixed, FP2014 = Value
 }

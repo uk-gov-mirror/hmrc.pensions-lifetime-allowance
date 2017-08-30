@@ -16,7 +16,10 @@
 
 package connectors
 
+import javax.inject.Inject
+
 import config.{MicroserviceAuditConnector, WSHttp}
+import connectors.NpsConnector.{baseUrl, getConfString}
 import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
 import model.{Error, HttpResponseDetails}
 import play.api.Logger
@@ -24,8 +27,10 @@ import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.config.inject.DefaultServicesConfig
 import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.http.logging.Authorization
+import uk.gov.hmrc.play.http.ws.WSHttp
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -139,6 +144,11 @@ trait NpsConnector {
     http.PUT[JsValue, HttpResponse](requestUrl, body)
   }
 
+  def getProtections(nino: String)(implicit hc:HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val ninoWithoutSuffix = nino.dropRight(1)
+    get(serviceUrl + s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protections")(addExtraHeaders, ec)
+  }
+
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getReadUrl(nino)
     val requestTime = DateTimeUtils.now
@@ -182,5 +192,20 @@ trait NpsResponseHandler extends HttpErrorFunctions {
       case 409 => response // this is an expected response for this API, so don't throw an exception
       case _ => handleResponse(method, url)(response)
     }
+  }
+}
+
+class NewNpsConnector @Inject()(http: WSHttp, config: DefaultServicesConfig) {
+
+  val baseUrl: String = config.baseUrl("nps")
+
+  val serviceUrl: String = "/pensions-lifetime-allowance"
+
+  val serviceAccessToken: String = config.getConfString("nps.accessToken", "")
+  val serviceEnvironment: String = config.getConfString("nps.environment", "")
+
+  def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val requestURL = s"$baseUrl$serviceUrl/individual/$nino/protections"
+    http.GET[HttpResponse](requestURL)
   }
 }
