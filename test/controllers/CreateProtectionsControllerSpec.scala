@@ -31,7 +31,7 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream5xxResponse}
-import model.ProtectionApplication
+import model._
 import uk.gov.hmrc.domain.Generator
 import connectors.NpsConnector
 import services.ProtectionService
@@ -53,8 +53,7 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
   val mockNpsConnector = mock[NpsConnector]
 
   val validApplicationBody = Json.toJson(ProtectionApplication(
-    protectionType = "FP2016"
-
+    protectionType = ProtectionType.Fixed2016
   ))
 
   val invalidApplicationBody = Json.parse(

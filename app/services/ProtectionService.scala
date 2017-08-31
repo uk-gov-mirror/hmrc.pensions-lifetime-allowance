@@ -106,7 +106,3 @@ class NewProtectionService @Inject()(npsConnector: NpsConnector) {
 
 
 }
-
-object ProtectionTypes extends Enumeration {
-  val Unknown, FP2016, IP2014, IP2016, Primary, Enhanced, Fixed, FP2014 = Value
-}

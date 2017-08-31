@@ -16,20 +16,45 @@
 
 package model
 
-import play.api.libs.json.Json
+import java.time.LocalDate
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 case class ProtectionAmendment (
-  protectionType: String,  // must be either "IP2014" or "IP2016"
+  protectionType: ProtectionType.Value,  // must be either "IP2014" or "IP2016"
   version: Int, // version of protection to update
-  status: String, // status of protection to update
-  relevantAmount: Double,
-  preADayPensionInPayment: Double,
-  postADayBenefitCrystallisationEvents: Double,
-  uncrystallisedRights: Double,
-  nonUKRights: Double,
-  pensionDebitTotalAmount: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None)
+  status: ProtectionStatus.Value, // status of protection to update
+  relevantAmount: Money,
+  preADayPensionInPayment: Money,
+  postADayBenefitCrystallisationEvents: Money,
+  uncrystallisedRights: Money,
+  nonUKRights: Money,
+  pensionDebitTotalAmount: Option[Money] = None,
+  pensionDebits: List[(LocalDate, Money)] = Nil) {
+
+  {
+    import ProtectionType._
+    val permissibleTypes = List(Individual2014,Individual2016)
+    require(
+      permissibleTypes contains protectionType,
+      s"${this.getClass.getSimpleName} must be " ++
+        s"${permissibleTypes.map(_.toString).mkString(" or ")}"
+    )
+  }
+}
 
 object ProtectionAmendment {
-  implicit val protectionAmendmentFormat = Json.format[ProtectionAmendment]
+  implicit val protectionAmendmentFormat: Format[ProtectionAmendment] = (
+    (__ \ "protectionType").format[ProtectionType.Value] and
+    (__ \ "version").format[Int] and
+    (__ \ "status").format[ProtectionStatus.Value] and
+    (__ \ "relevantAmount").format[Money] and
+    (__ \ "preADayPensionInPayment").format[Money] and
+    (__ \ "postADayBenefitCrystallisationEvents").format[Money] and
+    (__ \ "uncrystallisedRights").format[Money] and
+    (__ \ "nonUKRights").format[Money] and
+    (__ \ "pensionDebitsTotalAmount").formatNullable[Money] and      
+    (__ \ "pensionDebits").formatNullable[List[(LocalDate,Money)]].inmap(_.getOrElse(Nil),Some(_: List[(LocalDate,Money)]))
+  )(ProtectionAmendment.apply, unlift(ProtectionAmendment.unapply))
+
 }

@@ -21,7 +21,7 @@ import javax.inject.Inject
 import config.{MicroserviceAuditConnector, WSHttp}
 import connectors.NpsConnector.{baseUrl, getConfString}
 import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
-import model.{Error, HttpResponseDetails}
+import model._
 import play.api.Logger
 import util.NinoHelper
 import play.api.libs.json._
@@ -132,7 +132,7 @@ trait NpsConnector {
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
       Logger.warn(report)
-      HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
+      HttpResponseDetails(400, JsSuccess(report.asErrorJson))
     }
   }
 
@@ -178,7 +178,7 @@ trait NpsConnector {
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
       Logger.warn(report)
-      HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
+      HttpResponseDetails(400, JsSuccess(report.asErrorJson))
     }
   }
 

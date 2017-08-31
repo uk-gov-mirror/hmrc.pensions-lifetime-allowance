@@ -16,14 +16,14 @@
 
 package controllers
 
-import model.ProtectionAmendment
+import model._
 import play.api.mvc._
 import play.api.http.Status
 import services.ProtectionService
 import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
-import model.Error
+
 import scala.concurrent.Future
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -51,7 +51,7 @@ trait AmendProtectionsController extends BaseController {
       val protectionAmendmentJs = request.body.validate[ProtectionAmendment]
 
       protectionAmendmentJs.fold(
-        errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
+        errors => Future.successful(BadRequest(s"body failed validation with errors: $errors".asErrorJson)),
         p => protectionService.amendProtection(nino, protectionId, request.body.as[JsObject]) map { response =>
           response.status match {
             case OK if response.body.isSuccess => Ok(response.body.get)
@@ -63,7 +63,7 @@ trait AmendProtectionsController extends BaseController {
               } else {
                 ", body=" + Json.asciiStringify(response.body.get)
               }
-              val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
+              val error = {"NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails}.asErrorJson
               response.status match {
                 case OK => InternalServerError(error)
                 case BAD_REQUEST => BadRequest(error)
@@ -77,7 +77,7 @@ trait AmendProtectionsController extends BaseController {
         }
       )
     } getOrElse {
-      Future.successful(BadRequest(Json.toJson(Error(message = "path parameter 'id' is not an integer: " + id))))
+      Future.successful(BadRequest(s"path parameter 'id' is not an integer: $id".asErrorJson))
     }
   }
 }

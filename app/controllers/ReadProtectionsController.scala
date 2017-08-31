@@ -18,7 +18,7 @@ package controllers
 
 import javax.inject.Inject
 
-import model.Error
+import model._
 import play.api.mvc._
 import play.api.libs.json._
 import play.api.mvc.Action
@@ -85,7 +85,7 @@ trait ReadProtectionsController extends BaseController {
     } else {
       ""
     }
-    val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseBodyDetails))
+    val error = {"NPS request resulted in a response with: HTTP status=" + response.status + responseBodyDetails}.asErrorJson
     response.status match {
       case OK => InternalServerError(error)
       case BAD_REQUEST => BadRequest(error)

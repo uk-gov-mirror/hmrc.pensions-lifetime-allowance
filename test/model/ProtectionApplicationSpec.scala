@@ -16,10 +16,18 @@
 
 package model
 
-import play.api.libs.json.Json
+import org.scalatest._
+import org.scalatest.prop.Checkers
+import org.scalacheck.Arbitrary
+import org.scalacheck.Prop._
+import org.scalacheck.Gen._
 
-case class Error(message: String)
+class ProtectionApplicationSerialisationSpec extends FunSuite with Checkers {
 
-object Error {
-  implicit val errorFormat = Json.format[Error]
+  test("order is idempotent") {
+    check { (a: List[String]) =>
+      a.sorted == a.sorted.sorted
+    }
+  }
+
 }

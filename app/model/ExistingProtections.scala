@@ -18,20 +18,39 @@ package model
 
 import java.time.{LocalDate, LocalTime}
 
-case class ExistingProtections(nino: String,
-                               pensionSchemeAdministratorCheckReference: String,
-                               protections: Seq[Protection])
+case class ExistingProtections(
+  nino: String,
+  pensionSchemeAdministratorCheckReference: String,
+  protections: Seq[Protection]
+)
 
-case class Protection(id: Int, version: Int, `type`: Int,
-                      certificateDate: Option[LocalDate], certificateTime: Option[LocalTime],
-                      status: Int, protectionReference: Option[String], relevantAmount: Option[BigDecimal],
-                      preADayPensionInPayment: Option[BigDecimal], postADayBCE: Option[BigDecimal],
-                      uncrystallisedRights: Option[BigDecimal], nonUKRights: Option[BigDecimal],
-                      pensionDebitAmount: Option[BigDecimal], notificationID: Option[Int],
-                      protectedAmount: Option[BigDecimal], pensionDebitEnteredAmount: Option[BigDecimal],
-                      pensionDebitStartDate: Option[LocalDate], pensionDebitTotalAmount: Option[BigDecimal],
-                      withdrawnDate: Option[LocalDate], previousVersions: List[ProtectionVersion]
-                     )
+case class Protection(
+  id: Int,
+  version: Int,
+  protectionType: ProtectionType.Value,
+  certificateDate: Option[LocalDate],
+  certificateTime: Option[LocalTime],
+  status: ProtectionStatus.Value,
+  protectionReference: Option[String],
+  relevantAmount: Option[Money],
+  preADayPensionInPayment: Option[Money],
+  postADayBCE: Option[Money],
+  uncrystallisedRights: Option[Money],
+  nonUKRights: Option[Money],
+  pensionDebitAmount: Option[Money],
+  notificationID: Option[Int],
+  protectedAmount: Option[Money],
+  pensionDebitEnteredAmount: Option[Money],
+  pensionDebitStartDate: Option[LocalDate],
+  pensionDebitTotalAmount: Option[Money],
+  withdrawnDate: Option[LocalDate],
+  previousVersions: List[(Int, String)]
+)
 
-case class ProtectionVersion(version: Int, link: String)
+object ProtectionType extends Enumeration {
+  val Unknown, Fixed2016, Individual2014, Individual2016, Primary, Enhanced, Fixed, Fixed2014 = Value
+}
 
+object ProtectionStatus extends Enumeration {
+  val Unknown, Open, Dormant, Withdrawn, Expired, Unsuccessful, Rejected = Value
+}

@@ -19,7 +19,7 @@ package controllers
 import java.util.Random
 
 import connectors.NpsConnector
-import model.{ProtectionAmendment, ProtectionApplication}
+import model._
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
@@ -50,8 +50,8 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   val mockNpsConnector = mock[NpsConnector]
 
   val validAmendBody = Json.toJson(ProtectionAmendment(
-    protectionType = "IP2016",
-    status = "Open",
+    protectionType = ProtectionType.Individual2016,
+    status = ProtectionStatus.Open,
     version = testProtectionVersion,
     relevantAmount = 1250000.00,
     postADayBenefitCrystallisationEvents = 250000.00,

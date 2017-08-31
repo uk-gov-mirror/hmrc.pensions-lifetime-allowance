@@ -17,10 +17,10 @@
 package util
 
 import play.api.libs.json._
-
 import uk.gov.hmrc.play.test.UnitSpec
-
+import model._
 import NinoHelper.dropNinoSuffix
+import java.time.LocalDate.{of => date}
 
 object TransformSpec {
 
@@ -32,10 +32,10 @@ object TransformSpec {
 
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  import model.{ProtectionApplication, ProtectionAmendment, PensionDebit}
+
 
   val fp2016ApplicationRequestBody = Json.toJson(ProtectionApplication(
-    protectionType = "FP2016"
+    protectionType = ProtectionType.Fixed2016
   )).as[JsObject]
 
   val testNino = randomNino
@@ -145,12 +145,12 @@ object TransformSpec {
      """.stripMargin).as[JsObject]
 
   val ip2016ApplicationRequestWithPensionDebitsBody=Json.toJson(ProtectionApplication(
-    protectionType = "IP2016",
+    protectionType = ProtectionType.Fixed2016,
     postADayBenefitCrystallisationEvents = Some(100000.00),
     preADayPensionInPayment = Some(100000.00),
     uncrystallisedRights = Some(200000.00),
     nonUKRights = Some(800000.00),
-    pensionDebits = Some(List(PensionDebit("2016-6-29", 4000.00),PensionDebit("2016-4-1", 623000.00))),
+    pensionDebits = List((date(2016,6,29), 4000.00),(date(2016,4,1), 623000.00)),
     relevantAmount = Some(1200000.00)
   )).as[JsObject]
 }

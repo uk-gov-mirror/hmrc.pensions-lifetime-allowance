@@ -23,7 +23,7 @@ import services.ProtectionService
 import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
-import model.Error
+import model._
 import scala.concurrent.Future
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,7 +42,7 @@ trait CreateProtectionsController extends BaseController {
     val protectionApplicationJs = request.body.validate[ProtectionApplication]
 
     protectionApplicationJs.fold(
-      errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
+      errors => Future.successful(BadRequest(s"body failed validation with errors: $errors".asErrorJson)),
       p => protectionService.applyForProtection(nino, request.body.as[JsObject]) map { response =>
         response.status match {
           case OK if response.body.isSuccess => Ok(response.body.get)
@@ -54,7 +54,7 @@ trait CreateProtectionsController extends BaseController {
             } else {
               ", body=" + Json.asciiStringify(response.body.get)
             }
-            val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
+            val error = {"NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails}.asErrorJson
             response.status match {
               case OK => InternalServerError(error)
               case BAD_REQUEST => BadRequest(error)

@@ -16,17 +16,28 @@
 
 package model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
+import java.time.LocalDate
+import play.api.libs.functional.syntax._
 
 case class ProtectionApplication (
-  protectionType: String,
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None)
+  protectionType: ProtectionType.Value,
+  relevantAmount: Option[Money] = None,
+  preADayPensionInPayment: Option[Money] = None,
+  postADayBenefitCrystallisationEvents: Option[Money] = None,
+  uncrystallisedRights: Option[Money] = None,
+  nonUKRights: Option[Money] = None,
+  pensionDebits: List[(LocalDate, Money)] = Nil)
 
 object ProtectionApplication {
-  implicit val protectionApplicationFormat = Json.format[ProtectionApplication]
+
+  implicit val protectionApplicationFormat: Format[ProtectionApplication] = (
+    (__ \ "protectionType").format[ProtectionType.Value] and
+    (__ \ "relevantAmount").formatNullable[Money] and
+    (__ \ "preADayPensionInPayment").formatNullable[Money] and
+    (__ \ "postADayBenefitCrystallisationEvents").formatNullable[Money] and
+    (__ \ "uncrystallisedRights").formatNullable[Money] and
+    (__ \ "nonUKRights").formatNullable[Money] and
+    (__ \ "pensionDebits").formatNullable[List[(LocalDate,Money)]].inmap(_.getOrElse(Nil),Some(_: List[(LocalDate,Money)]))
+  )(ProtectionApplication.apply, unlift(ProtectionApplication.unapply))
 }
