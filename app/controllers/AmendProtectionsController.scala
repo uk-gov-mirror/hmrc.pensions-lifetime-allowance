@@ -20,12 +20,13 @@ import model.ProtectionAmendment
 import play.api.mvc._
 import play.api.http.Status
 import services.ProtectionService
-import uk.gov.hmrc.play.http.HttpResponse
+import uk.gov.hmrc.play.http.{BadRequestException, HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
 import model.Error
-import scala.concurrent.Future
+import play.api.Logger
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object AmendProtectionsController extends AmendProtectionsController {
@@ -52,7 +53,7 @@ trait AmendProtectionsController extends BaseController {
 
       protectionAmendmentJs.fold(
         errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
-        p => protectionService.amendProtection(nino, protectionId, request.body.as[JsObject]) map { response =>
+        p => protectionService.amendProtection(nino, protectionId, request.body.as[JsObject]).map { response =>
           response.status match {
             case OK if response.body.isSuccess => Ok(response.body.get)
             case CONFLICT if response.body.isSuccess => Conflict(response.body.get) // this is a normal/expected response
@@ -64,16 +65,26 @@ trait AmendProtectionsController extends BaseController {
                 ", body=" + Json.asciiStringify(response.body.get)
               }
               val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
-              response.status match {
-                case OK => InternalServerError(error)
-                case BAD_REQUEST => BadRequest(error)
-                case INTERNAL_SERVER_ERROR => InternalServerError(error)
-                case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
-                case UNAUTHORIZED => Unauthorized(error)
-                case _ => InternalServerError(error)
-              }
+              InternalServerError(error)
             }
           }
+        }.recover {
+          case Upstream5xxResponse(errorDetails, SERVICE_UNAVAILABLE, _) =>
+            Logger.error(s"[AmendProtectionsController.amendProtection] $errorDetails")
+            ServiceUnavailable(errorDetails)
+          case Upstream5xxResponse(errorDetails, _, _) =>
+            Logger.error(s"[AmendProtectionsController.amendProtection] $errorDetails")
+            InternalServerError(errorDetails)
+          case Upstream4xxResponse(errorDetails, UNAUTHORIZED, _, _) =>
+            Logger.error(s"[AmendProtectionsController.amendProtection] $errorDetails")
+            Unauthorized(errorDetails)
+          case Upstream4xxResponse(errorDetails,_,_,_) =>
+            Logger.error(s"[AmendProtectionsController.amendProtection] $errorDetails")
+            InternalServerError(errorDetails)
+          case badRequest: BadRequestException =>
+            Logger.error(s"[AmendProtectionsController.amendProtection] ${badRequest.getMessage}", badRequest)
+            BadRequest(badRequest.getMessage)
+
         }
       )
     } getOrElse {

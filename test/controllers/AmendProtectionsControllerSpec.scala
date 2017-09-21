@@ -31,7 +31,7 @@ import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
 
@@ -138,8 +138,6 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
 
   "AmendProtectionController" should {
     "respond to an invalid Amend Protection request with BAD_REQUEST" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulAmendIP2016NPSResponseBody))))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -155,7 +153,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   "AmendProtectionController" should {
     "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(500, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+        .thenReturn(Future.failed(Upstream5xxResponse("test", INTERNAL_SERVER_ERROR, BAD_GATEWAY)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -169,9 +167,9 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   }
 
   "AmendProtectionController" should {
-    "handle a 499 response from NPS service by passing 500 (INTERNAL_SERVER_ERROR) back to the caller" in {
+    "handle a 422 response from NPS service by passing 500 (INTERNAL_SERVER_ERROR) back to the caller" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(499, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+        .thenReturn(Future.failed(Upstream4xxResponse("some 422 message", UNPROCESSABLE_ENTITY ,INTERNAL_SERVER_ERROR)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -188,7 +186,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   "AmendProtectionController" should {
     "handle a 503 response from NPS service by passing same code back to the caller" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(503, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+        .thenReturn(Future.failed(Upstream5xxResponse("some 503 message", SERVICE_UNAVAILABLE, BAD_GATEWAY)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -204,7 +202,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   "AmendProtectionController" should {
     "handle a 401 (UNAUTHORIZED) response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(401, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+        .thenReturn(Future.failed(Upstream4xxResponse("test 401 message", UNAUTHORIZED, INTERNAL_SERVER_ERROR)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -219,7 +217,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
     "AmendProtectionController" should {
       "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
         when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-          .thenReturn(Future.successful(model.HttpResponseDetails(400, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+          .thenReturn(Future.failed(new BadRequestException("Bad request test message")))
 
         val fakeRequest = FakeRequest(
           method = "PUT",
