@@ -33,38 +33,20 @@ object CreateProtectionsController extends CreateProtectionsController {
   override def WithCitizenRecordCheck(nino: String)= ProtectionsActions.WithCitizenRecordCheckAction(nino)
 }
 
-trait CreateProtectionsController extends BaseController {
+trait CreateProtectionsController extends NPSResponseHandler {
 
   def protectionService: ProtectionService
   def WithCitizenRecordCheck(nino:String): ActionBuilder[Request]
 
-  def applyForProtection(nino: String) = WithCitizenRecordCheck(nino).async(BodyParsers.parse.json) { implicit request =>
+  def applyForProtection(nino: String): Action[JsValue] = WithCitizenRecordCheck(nino).async(BodyParsers.parse.json) { implicit request =>
     val protectionApplicationJs = request.body.validate[ProtectionApplication]
 
     protectionApplicationJs.fold(
       errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
-      p => protectionService.applyForProtection(nino, request.body.as[JsObject]) map { response =>
-        response.status match {
-          case OK if response.body.isSuccess => Ok(response.body.get)
-          case CONFLICT if response.body.isSuccess => Conflict(response.body.get) // this is a normal/expected response
-          case _ => {
-            //  error response handling
-            val responseErrorDetails = if (!response.body.isSuccess) {
-              ", but unable to parse the NPS response body"
-            } else {
-              ", body=" + Json.asciiStringify(response.body.get)
-            }
-            val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
-            response.status match {
-              case OK => InternalServerError(error)
-              case BAD_REQUEST => BadRequest(error)
-              case INTERNAL_SERVER_ERROR => InternalServerError(error)
-              case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
-              case UNAUTHORIZED => Unauthorized(error)
-              case _ => InternalServerError(error)
-            }
-          }
-        }
+      p => protectionService.applyForProtection(nino, request.body.as[JsObject]).map { response =>
+        handleNPSSuccess(response)
+      }.recover {
+        case downstreamError => handleNPSError(downstreamError, "[AmendProtectionsController.amendProtection]")
       }
     )
   }
