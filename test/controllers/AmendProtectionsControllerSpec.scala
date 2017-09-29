@@ -31,7 +31,7 @@ import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
 
@@ -121,6 +121,20 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   }
 
   "AmendProtectionController" should {
+    "respond to an invalid Amend Protection request with BAD_REQUEST" in {
+
+      val fakeRequest = FakeRequest(
+        method = "PUT",
+        uri = "",
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
+        body = invalidAmendBody)
+
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
+      status(result) must be(BAD_REQUEST)
+    }
+  }
+
+  "AmendProtectionController" should {
     "respond to a valid Amend Protection request with OK" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulAmendIP2016NPSResponseBody))))
@@ -137,25 +151,9 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   }
 
   "AmendProtectionController" should {
-    "respond to an invalid Amend Protection request with BAD_REQUEST" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulAmendIP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "PUT",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = invalidAmendBody)
-
-      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
-      status(result) must be(BAD_REQUEST)
-    }
-  }
-
-  "AmendProtectionController" should {
     "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(500, JsSuccess(successfulAmendIP2016NPSResponseBody))))
+        .thenReturn(Future.failed(Upstream5xxResponse("test", INTERNAL_SERVER_ERROR, BAD_GATEWAY)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
@@ -169,83 +167,15 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   }
 
   "AmendProtectionController" should {
-    "handle a 499 response from NPS service by passing 500 (INTERNAL_SERVER_ERROR) back to the caller" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(499, JsSuccess(successfulAmendIP2016NPSResponseBody))))
-
+    "return a 400 when an invalid ID is provided" in {
       val fakeRequest = FakeRequest(
         method = "PUT",
         uri = "",
         headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
-      status(result) must be(INTERNAL_SERVER_ERROR)
-    }
-  }
-
-
-  "AmendProtectionController" should {
-    "handle a 503 response from NPS service by passing same code back to the caller" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(503, JsSuccess(successfulAmendIP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "PUT",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = validAmendBody)
-
-      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
-      status(result) must be(SERVICE_UNAVAILABLE)
-    }
-  }
-
-  "AmendProtectionController" should {
-    "handle a 401 (UNAUTHORIZED) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(401, JsSuccess(successfulAmendIP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "PUT",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = validAmendBody)
-
-      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
-      status(result) must be(UNAUTHORIZED)
-    }
-
-    "AmendProtectionController" should {
-      "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
-        when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-          .thenReturn(Future.successful(model.HttpResponseDetails(400, JsSuccess(successfulAmendIP2016NPSResponseBody))))
-
-        val fakeRequest = FakeRequest(
-          method = "PUT",
-          uri = "",
-          headers = FakeHeaders(Seq("content-type" -> "application.json")),
-          body = validAmendBody)
-
-        val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
-        status(result) must be(BAD_REQUEST)
-      }
-
-    "AmendProtectionController" should {
-        "handle an OK status but non-parseable response body from NPS service by passing an INTERNAL_SERVER_ERROR back to the caller" in {
-          when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-            .thenReturn(Future.successful(model.HttpResponseDetails(200, JsError("Unparseable response"))))
-
-          val fakeRequest = FakeRequest(
-            method = "PUT",
-            uri = "",
-            headers = FakeHeaders(Seq("content-type" -> "application.json")),
-            body = validAmendBody)
-
-          val result = testAmendController.amendProtection(testNino,testProtectionId.toString).apply(fakeRequest)
-          status(result) must be(INTERNAL_SERVER_ERROR)
-        }
-      }
+      val result = testAmendController.amendProtection(testNino, "not a long").apply(fakeRequest)
+      status(result) must be(BAD_REQUEST)
     }
   }
 }

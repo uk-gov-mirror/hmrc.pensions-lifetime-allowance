@@ -18,6 +18,8 @@ package controllers
 
 import java.util.Random
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.NinoHelper
 import play.api.http.Status
@@ -30,16 +32,20 @@ import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import uk.gov.hmrc.play.http.{HeaderCarrier, Upstream5xxResponse}
+import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, Upstream5xxResponse}
 import model.ProtectionApplication
 import uk.gov.hmrc.domain.Generator
 import connectors.NpsConnector
 import services.ProtectionService
+import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
+class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter {
+
+  private implicit val system: ActorSystem = ActorSystem("test-sys")
+  private implicit val mat: ActorMaterializer = ActorMaterializer()
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
@@ -114,7 +120,8 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
 
   object testCreateController extends CreateProtectionsController {
     override val protectionService = testProtectionService
-    override def WithCitizenRecordCheck(nino:String) = AlwaysExecuteAction(nino)
+
+    override def WithCitizenRecordCheck(nino: String) = AlwaysExecuteAction(nino)
   }
 
   "CreateProtectionController" should {
@@ -129,30 +136,14 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
         body = validApplicationBody)
 
       val result: Future[Result] = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-      status(result) must be(OK)
+      status(result) shouldBe OK
     }
   }
 
   "CreateProtectionController" should {
-    "respond to an invalid Create Protection request with BAD_REQUEST" in {
+    "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "POST",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = invalidApplicationBody)
-
-      val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-      status(result) must be(BAD_REQUEST)
-    }
-  }
-
-  "CreateProtectionController" should {
-    "handle a 409 (CONFLICT( response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(409, JsSuccess(unsuccessfulCreateFP2016NPSResponseBody))))
+        .thenReturn(Future.failed(new BadRequestException("bad request")))
 
       val fakeRequest = FakeRequest(
         method = "POST",
@@ -161,69 +152,22 @@ class CreateProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite w
         body = validApplicationBody)
 
       val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-      status(result) must be(CONFLICT)
-    }
-  }
-
-  "CreateProtectionController" should {
-    "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(500, JsSuccess(successfulCreateFP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "POST",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = validApplicationBody)
-
-      val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-      status(result) must be(INTERNAL_SERVER_ERROR)
-    }
-  }
-  "CreateProtectionController" should {
-    "handle a 401 (UNAUTHORIZED) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(401, JsSuccess(successfulCreateFP2016NPSResponseBody))))
-
-      val fakeRequest = FakeRequest(
-        method = "POST",
-        uri = "",
-        headers = FakeHeaders(Seq("content-type" -> "application.json")),
-        body = validApplicationBody)
-
-      val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-      status(result) must be(UNAUTHORIZED)
+      status(result) shouldBe BAD_REQUEST
     }
 
     "CreateProtectionController" should {
-      "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
-        when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-          .thenReturn(Future.successful(model.HttpResponseDetails(400, JsSuccess(successfulCreateFP2016NPSResponseBody))))
-
+      "handle an invalid Json submission" in {
         val fakeRequest = FakeRequest(
           method = "POST",
           uri = "",
           headers = FakeHeaders(Seq("content-type" -> "application.json")),
-          body = validApplicationBody)
+          body = invalidApplicationBody)
 
         val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-        status(result) must be(BAD_REQUEST)
-      }
-
-      "CreateProtectionController" should {
-        "handle an OK status but non-parseable response body from NPS service by passing an INTERNAL_SERVER_ERROR back to the caller" in {
-          when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
-            .thenReturn(Future.successful(model.HttpResponseDetails(200, JsError("Unparseable response"))))
-
-          val fakeRequest = FakeRequest(
-            method = "POST",
-            uri = "",
-            headers = FakeHeaders(Seq("content-type" -> "application.json")),
-            body = validApplicationBody)
-
-          val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-          status(result) must be(INTERNAL_SERVER_ERROR)
-        }
+        status(result) shouldBe BAD_REQUEST
+        await(jsonBodyOf(result)) shouldBe Json.obj("message" -> JsString(
+          "body failed validation with errors: List((/protectionType,List(ValidationError(List(error.path.missing),WrappedArray()))))"
+        ))
       }
     }
   }
