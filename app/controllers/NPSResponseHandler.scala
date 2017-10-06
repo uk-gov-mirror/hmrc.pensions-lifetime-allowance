@@ -20,8 +20,8 @@ import model.{Error, HttpResponseDetails}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import uk.gov.hmrc.play.http.{BadRequestException, HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.http.{ BadRequestException, Upstream4xxResponse, Upstream5xxResponse }
 
 trait NPSResponseHandler extends BaseController{
 

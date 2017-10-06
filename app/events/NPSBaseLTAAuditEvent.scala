@@ -18,8 +18,8 @@ package events
 
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.http.HeaderCarrier
 import play.api.libs.json.{JsNumber, JsObject}
+import uk.gov.hmrc.http.HeaderCarrier
 
 abstract class NPSBaseLTAEvent(
   ltaAuditType: String,

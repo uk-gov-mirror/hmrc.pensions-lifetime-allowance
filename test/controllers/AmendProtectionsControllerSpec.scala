@@ -31,9 +31,9 @@ import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
+import uk.gov.hmrc.http.{ HeaderCarrier, Upstream5xxResponse }
 
 class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
 

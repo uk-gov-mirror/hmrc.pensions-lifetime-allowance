@@ -20,7 +20,6 @@ import model.ProtectionAmendment
 import play.api.mvc._
 import play.api.http.Status
 import services.ProtectionService
-import uk.gov.hmrc.play.http.{BadRequestException, HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
 import model.Error

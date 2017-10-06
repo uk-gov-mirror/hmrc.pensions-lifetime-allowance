@@ -30,11 +30,11 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.play.http.HeaderCarrier
 import util.NinoHelper
 import play.api.libs.json.JsNumber
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
 
 class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
 

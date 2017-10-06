@@ -18,7 +18,6 @@ package services
 
 import connectors.NpsConnector
 import play.api.libs.json.{JsObject, JsResult}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import play.api.http.Status
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,6 +25,7 @@ import util.{NinoHelper, Transformers}
 import model.HttpResponseDetails
 import play.mvc.BodyParser.Json
 import play.api.libs.json.Json.prettyPrint
+import uk.gov.hmrc.http.HeaderCarrier
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector

@@ -21,9 +21,10 @@ import config.WSHttp
 import play.api.http.Status._
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HttpResponse, _}
+import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse }
 
 object CitizenDetailsConnector extends CitizenDetailsConnector with ServicesConfig {
 

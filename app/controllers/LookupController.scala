@@ -20,10 +20,10 @@ import connectors.NpsConnector
 import model.Error
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
-import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.http.HttpResponse
 
 object LookupController extends LookupController {
   override val npsConnector = NpsConnector

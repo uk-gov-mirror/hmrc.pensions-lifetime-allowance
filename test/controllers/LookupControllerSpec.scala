@@ -25,9 +25,9 @@ import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.Future
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 class LookupControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
