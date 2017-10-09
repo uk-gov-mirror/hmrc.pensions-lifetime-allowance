@@ -20,8 +20,9 @@ import connectors._
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
-import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter
 
 object ProtectionsActions extends ProtectionsActions{
   override lazy val citizenDetailsConnector = CitizenDetailsConnector
@@ -43,7 +44,7 @@ trait ProtectionsActions{
     }
 
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
-      implicit val hc: HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers)
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
 
       citizenDetailsConnector.checkCitizenRecord(nino) flatMap {
           case CitizenRecordOK                  => block(request)

@@ -32,7 +32,6 @@ import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, Upstream5xxResponse}
 import model.ProtectionApplication
 import uk.gov.hmrc.domain.Generator
 import connectors.NpsConnector
@@ -41,6 +40,7 @@ import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.{ BadRequestException, HeaderCarrier }
 
 class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter {
 

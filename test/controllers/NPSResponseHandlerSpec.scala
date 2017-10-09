@@ -22,7 +22,7 @@ import model.HttpResponseDetails
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.http.Status._
-import uk.gov.hmrc.play.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{ BadRequestException, Upstream4xxResponse, Upstream5xxResponse }
 
 class NPSResponseHandlerSpec extends UnitSpec {
   val testResponseHandler: NPSResponseHandler = new NPSResponseHandler {}
