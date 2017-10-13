@@ -88,7 +88,8 @@ private object AppDependencies {
         "org.scalatestplus.play" %% "scalatestplus-play" % scalatestPlusPlayVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "org.jsoup" % "jsoup" % jsoupVersion % scope
+        "org.jsoup" % "jsoup" % jsoupVersion % scope,
+        "com.github.tomakehurst" % "wiremock" % "2.5.0" % scope
       )
     }.test
   }
