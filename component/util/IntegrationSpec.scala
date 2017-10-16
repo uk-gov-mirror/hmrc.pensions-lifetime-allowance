@@ -41,4 +41,9 @@ trait IntegrationSpec extends UnitSpec
     stopWiremock()
     super.afterAll()
   }
+
+  def mockCitizenDetails(nino: String, status: Int): Unit = {
+    val url = s"/citizen-details/$nino/designatory-details"
+    stubGet(url, status, "")
+  }
 }
