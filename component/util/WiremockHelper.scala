@@ -37,7 +37,8 @@ trait WiremockHelper extends FakeConfig {
 
   def resetWiremock(): Unit = WireMock.reset()
 
-  def stubGet(url: String, status: Integer, body: String): StubMapping =
+  def stubGet(url: String, status: Integer, body: String): StubMapping = {
+    removeStub(get(urlMatching(url)))
     stubFor(get(urlMatching(url))
       .willReturn(
         aResponse().
@@ -45,6 +46,7 @@ trait WiremockHelper extends FakeConfig {
           withBody(body)
       )
     )
+  }
 
   def stubPost(url: String, status: Integer, responseBody: String): StubMapping = {
     removeStub(post(urlMatching(url)))
@@ -80,7 +82,8 @@ trait FakeConfig {
     "microservice.services.nps.host" -> s"$wiremockHost",
     "microservice.services.nps.port" -> s"$wiremockPort",
     "microservice.services.citizen-details.host" -> s"$wiremockHost",
-    "microservice.services.citizen-details.port" -> s"$wiremockPort"
+    "microservice.services.citizen-details.port" -> s"$wiremockPort",
+    "microservice.services.citizen-details.checkRequired" -> "true"
   ) ++ additionalConfig
 }
 
