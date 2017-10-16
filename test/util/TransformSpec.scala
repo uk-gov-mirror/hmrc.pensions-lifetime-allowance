@@ -140,7 +140,8 @@ object TransformSpec {
        |  "preADayPensionInPayment": 100000.00,
        |  "uncrystallisedRights": 200000.00,
        |  "nonUKRights": 800000.00,
-       |  "relevantAmount": 1200000.00
+       |  "relevantAmount": 1200000.00,
+       |  "withdrawnDate":"2015-12-01"
        |  }
      """.stripMargin).as[JsObject]
 
@@ -235,7 +236,7 @@ class TransformSpec extends UnitSpec{
       val protection=npsTopLevelFields.get("protection")
       protection.isDefined shouldBe true
       val protectionFields = protection.get.as[JsObject].value
-      protectionFields.size shouldBe 9
+      protectionFields.size shouldBe 10
       protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
       protectionFields.get("id").get.as[JsNumber].value.toInt shouldBe testProtectionId
       protectionFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion

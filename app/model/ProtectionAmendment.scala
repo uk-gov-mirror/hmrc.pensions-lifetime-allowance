@@ -28,7 +28,8 @@ case class ProtectionAmendment (
   uncrystallisedRights: Double,
   nonUKRights: Double,
   pensionDebitTotalAmount: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None)
+  pensionDebits: Option[List[PensionDebit]] = None,
+  withdrawnDate:Option[String] =None)
 
 object ProtectionAmendment {
   implicit val protectionAmendmentFormat = Json.format[ProtectionAmendment]
