@@ -21,9 +21,8 @@ import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4
 import connectors.NpsConnector._
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.play.http.{HttpResponse, Upstream4xxResponse}
 import play.api.http.Status._
-import uk.gov.hmrc.play.http.HttpErrorFunctions
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, Upstream4xxResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
