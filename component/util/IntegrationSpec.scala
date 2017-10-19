@@ -46,4 +46,9 @@ trait IntegrationSpec extends UnitSpec
     val url = s"/citizen-details/$nino/designatory-details"
     stubGet(url, status, "")
   }
+
+  def mockAudit(status: Int): Unit = {
+    val url = s"/write/audit"
+    stubPost(url, status, "audit-response")
+  }
 }

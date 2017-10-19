@@ -16,13 +16,18 @@
 
 package util
 
-import config.WSHttp
+import config.{MicroserviceAuditConnector, WSHttp}
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4xxResponse}
 import connectors.NpsConnector._
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.http.Status._
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, Upstream4xxResponse}
+import uk.gov.hmrc.play.audit.model.DataEvent
+import com.github.tomakehurst.wiremock.client.WireMock._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
@@ -71,6 +76,27 @@ class TestConnectorSpec extends IntegrationSpec with HttpErrorFunctions{
                 INTERNAL_SERVER_ERROR)
           case Failure(_) => fail("Incorrect Citizen Record response type")
         }
+      }
+    }
+
+    "mock the auditing call" which {
+
+      "should have the correct json body" in {
+        mockAudit(OK)
+        val result = await(MicroserviceAuditConnector.sendEvent(DataEvent(auditSource = "testCall", auditType = "type", eventId = "id", generatedAt = DateTime.parse("06-10-1990", DateTimeFormat.forPattern("dd-MM-yyyy")))))
+
+        verify(postRequestedFor(urlEqualTo("/write/audit"))
+          .withRequestBody(equalToJson(Json.parse(
+            """
+              |{
+              | "auditSource" : "testCall",
+              | "auditType" : "type",
+              | "eventId" : "id",
+              | "tags" : { },
+              | "detail": { },
+              | "generatedAt": "1990-10-05T23:00:00.000+0000"
+              |}
+            """.stripMargin).toString(), false, true)))
       }
     }
   }
