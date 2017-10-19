@@ -51,4 +51,9 @@ trait IntegrationSpec extends UnitSpec
     val url = s"/write/audit"
     stubPost(url, status, "audit-response")
   }
+
+  def mockNPSConnector(nino: String, status: Int): Unit = {
+    val url = s"/pensions-lifetime-allowance/individual/$nino/protection"
+    stubPost(url, status, "")
+  }
 }

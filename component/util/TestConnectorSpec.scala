@@ -18,11 +18,14 @@ package util
 
 import config.{MicroserviceAuditConnector, WSHttp}
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4xxResponse}
+import config.WSHttp
+import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4xxResponse, NpsConnector}
 import connectors.NpsConnector._
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, Upstream4xxResponse}
 import uk.gov.hmrc.play.audit.model.DataEvent
 import com.github.tomakehurst.wiremock.client.WireMock._
@@ -99,5 +102,6 @@ class TestConnectorSpec extends IntegrationSpec with HttpErrorFunctions{
             """.stripMargin).toString(), false, true)))
       }
     }
+
   }
 }
