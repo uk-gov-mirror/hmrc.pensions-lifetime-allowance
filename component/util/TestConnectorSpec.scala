@@ -16,13 +16,21 @@
 
 package util
 
-import config.WSHttp
+import config.{MicroserviceAuditConnector, WSHttp}
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4xxResponse}
+import config.WSHttp
+import connectors.{CitizenDetailsConnector, CitizenRecordOK, CitizenRecordOther4xxResponse, NpsConnector}
 import connectors.NpsConnector._
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.http.Status._
+import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, Upstream4xxResponse}
+import uk.gov.hmrc.play.audit.model.DataEvent
+import com.github.tomakehurst.wiremock.client.WireMock._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
@@ -71,6 +79,77 @@ class TestConnectorSpec extends IntegrationSpec with HttpErrorFunctions{
                 INTERNAL_SERVER_ERROR)
           case Failure(_) => fail("Incorrect Citizen Record response type")
         }
+      }
+    }
+
+    "mock the auditing call" which {
+
+      "should have the correct json body" in {
+        mockAudit(OK)
+        val result = await(MicroserviceAuditConnector.sendEvent(DataEvent(auditSource = "testCall", auditType = "type", eventId = "id", generatedAt = DateTime.parse("06-10-1990", DateTimeFormat.forPattern("dd-MM-yyyy")))))
+
+        verify(postRequestedFor(urlEqualTo("/write/audit"))
+          .withRequestBody(equalToJson(Json.parse(
+            """
+              |{
+              | "auditSource" : "testCall",
+              | "auditType" : "type",
+              | "eventId" : "id",
+              | "tags" : { },
+              | "detail": { },
+              | "generatedAt": "1990-10-05T23:00:00.000+0000"
+              |}
+            """.stripMargin).toString(), false, true)))
+      }
+    }
+
+    "mock the NPS call" which {
+
+      "should have the correct json body" in {
+        mockNPSConnector("AA100001", OK)
+
+        val validBody = Json.parse(
+       """
+        |{
+        |
+        |    "nino": "AA100001A",
+        |    "protection": {
+        |        "type": 1,
+        |        "relevantAmount": 1250000,
+        |        "preADayPensionInPayment": 250000,
+        |        "postADayBCE": 250000,
+        |        "uncrystallisedRights": 500000,
+        |        "nonUKRights": 250000,
+        |        "pensionDebitAmount": 0,
+        |        "protectedAmount": 200,
+        |        "pensionDebitEnteredAmount": 150,
+        |        "pensionDebitStartDate": "2015-05-25",
+        |        "pensionDebitTotalAmount": 15000
+        |    },
+        |    "pensionDebits": [
+        |        {
+        |            "pensionDebitEnteredAmount": 400.00,
+        |            "pensionDebitStartDate": "2015-05-25"
+        |        },
+        |        {
+        |            "pensionDebitEnteredAmount": 200.00,
+        |            "pensionDebitStartDate": "2015-05-24"
+        |        },
+        |        {
+        |            "pensionDebitEnteredAmount": 100.00,
+        |            "pensionDebitStartDate": "2015-05-23"
+        |        }
+        |    ]
+        |
+        |}
+      """.stripMargin)
+
+        val validBodyAsObject:JsObject = validBody.as[JsObject]
+        val result = await(NpsConnector.applyForProtection("AA100001A", validBodyAsObject))
+
+        verify(postRequestedFor(urlEqualTo("/pensions-lifetime-allowance/individual/AA100001/protection")))
+
+        result.status shouldBe OK
       }
     }
   }

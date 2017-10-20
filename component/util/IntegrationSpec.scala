@@ -46,4 +46,40 @@ trait IntegrationSpec extends UnitSpec
     val url = s"/citizen-details/$nino/designatory-details"
     stubGet(url, status, "")
   }
+
+  def mockAudit(status: Int): Unit = {
+    val url = s"/write/audit"
+    stubPost(url, status, "audit-response")
+  }
+
+  def mockNPSConnector(nino: String, status: Int): Unit = {
+    val url = s"/pensions-lifetime-allowance/individual/$nino/protection"
+    stubPost(url, status,
+      s"""
+        |{
+        |    "nino": "$nino",
+        |    "pensionSchemeAdministratorCheckReference": "PSA12345678A",
+        |    "protection": {
+        |        "id": 1,
+        |        "version": 1,
+        |        "type": 0,
+        |        "certificateDate": "2015-05-22",
+        |        "certificateTime": "12:22:59",
+        |        "status": 1,
+        |        "protectionReference": "IP141234567890C",
+        |        "relevantAmount": 1250000,
+        |        "preADayPensionInPayment": 250000,
+        |        "postADayBCE": 250000,
+        |        "uncrystallisedRights": 500000,
+        |        "nonUKRights": 250000,
+        |        "pensionDebitAmount": 0,
+        |        "notificationID": 5,
+        |        "protectedAmount": 600000,
+        |        "pensionDebitEnteredAmount": 300,
+        |        "pensionDebitStartDate": "2015-01-29",
+        |        "pensionDebitTotalAmount": 800
+        |    }
+        |}
+      """.stripMargin)
+  }
 }
