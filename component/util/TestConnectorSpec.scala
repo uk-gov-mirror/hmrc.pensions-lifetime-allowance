@@ -96,10 +96,9 @@ class TestConnectorSpec extends IntegrationSpec with HttpErrorFunctions{
               | "auditType" : "type",
               | "eventId" : "id",
               | "tags" : { },
-              | "detail": { },
-              | "generatedAt": "1990-10-05T23:00:00.000+0000"
+              | "detail": { }
               |}
-            """.stripMargin).toString(), false, true)))
+            """.stripMargin).toString(), true, true)))
       }
     }
 
