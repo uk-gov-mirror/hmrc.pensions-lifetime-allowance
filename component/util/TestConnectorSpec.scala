@@ -103,5 +103,54 @@ class TestConnectorSpec extends IntegrationSpec with HttpErrorFunctions{
       }
     }
 
+    "mock the NPS call" which {
+
+      "should have the correct json body" in {
+        mockNPSConnector("AA100001", OK)
+
+        val validBody = Json.parse(
+       """
+        |{
+        |
+        |    "nino": "AA100001A",
+        |    "protection": {
+        |        "type": 1,
+        |        "relevantAmount": 1250000,
+        |        "preADayPensionInPayment": 250000,
+        |        "postADayBCE": 250000,
+        |        "uncrystallisedRights": 500000,
+        |        "nonUKRights": 250000,
+        |        "pensionDebitAmount": 0,
+        |        "protectedAmount": 200,
+        |        "pensionDebitEnteredAmount": 150,
+        |        "pensionDebitStartDate": "2015-05-25",
+        |        "pensionDebitTotalAmount": 15000
+        |    },
+        |    "pensionDebits": [
+        |        {
+        |            "pensionDebitEnteredAmount": 400.00,
+        |            "pensionDebitStartDate": "2015-05-25"
+        |        },
+        |        {
+        |            "pensionDebitEnteredAmount": 200.00,
+        |            "pensionDebitStartDate": "2015-05-24"
+        |        },
+        |        {
+        |            "pensionDebitEnteredAmount": 100.00,
+        |            "pensionDebitStartDate": "2015-05-23"
+        |        }
+        |    ]
+        |
+        |}
+      """.stripMargin)
+
+        val validBodyAsObject:JsObject = validBody.as[JsObject]
+        val result = await(NpsConnector.applyForProtection("AA100001A", validBodyAsObject))
+
+        verify(postRequestedFor(urlEqualTo("/pensions-lifetime-allowance/individual/AA100001/protection")))
+
+        result.status shouldBe OK
+      }
+    }
   }
 }
