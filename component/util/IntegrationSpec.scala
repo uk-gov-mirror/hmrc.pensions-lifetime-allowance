@@ -16,6 +16,8 @@
 
 package util
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers}
 import org.scalatestplus.play.OneServerPerSuite
@@ -26,6 +28,8 @@ trait IntegrationSpec extends UnitSpec
   with OneServerPerSuite with ScalaFutures with IntegrationPatience with Matchers
   with WiremockHelper with BeforeAndAfterEach with BeforeAndAfterAll {
 
+  implicit val actorSystem: ActorSystem = ActorSystem()
+  implicit val mat: Materializer = ActorMaterializer()
   implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   override def beforeEach(): Unit = {
@@ -50,6 +54,7 @@ trait IntegrationSpec extends UnitSpec
   def mockAudit(status: Int): Unit = {
     val url = s"/write/audit"
     stubPost(url, status, "audit-response")
+    stubPost(url + "/merged", status, "audit-response")
   }
 
   def mockNPSConnector(nino: String, status: Int): Unit = {
