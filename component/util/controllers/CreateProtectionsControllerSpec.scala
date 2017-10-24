@@ -229,7 +229,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
      """.stripMargin
   ).toString()
 
-  def failureAuditResponse(nino: String, ninoWithoutSuffix: String, protectionType: Int, status: Int, messsage: String, requestBody: String): String = Json.parse(
+  def failureAuditResponse(nino: String, ninoWithoutSuffix: String, protectionType: Int, status: Int, message: String): String = Json.parse(
     s"""
        |{
        |"auditSource" : "pensions-lifetime-allowance",
@@ -248,7 +248,6 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
        |    "method" : "POST",
        |    "path" : "http://localhost:11111/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection",
        |    "deviceID" : "-",
-       |    "requestBody" : $requestBody,
        |    "ipAddress" : "-",
        |    "token" : "-",
        |    "Authorization" : "Bearer accessToken"
@@ -257,7 +256,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
        |"response" : {
        |  "tags" : { },
        |  "detail" : {
-       |    "responseMessage" : "$messsage",
+       |    "responseMessage" : "$message",
        |    "statusCode" : "$status"
        |  }
        |}
@@ -375,6 +374,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def result: WSResponse = client(s"individuals/$nino/protections").post(validCreateIPBody(ninoWithoutSuffix)).futureValue
 
+
       "return a service_unavailable response" in {
         testMocks()
         result.status shouldBe SERVICE_UNAVAILABLE
@@ -396,8 +396,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       "submit the correct auditing data" in {
         testMocks()
         result
-        verify(postRequestedFor(urlEqualTo("/write/audit"))
-          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, SERVICE_UNAVAILABLE, "error message", validSubmissionIPBody(ninoWithoutSuffix)), false, true))
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, SERVICE_UNAVAILABLE, "error message"), false, true))
         )
       }
     }
@@ -437,6 +437,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
           .withRequestBody(equalToJson(validSubmissionIPBody(ninoWithoutSuffix), false, true))
         )
       }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, BAD_GATEWAY, "error message"), false, true))
+        )
+      }
     }
 
     "submitting an application which results in a Unauthorised response" should {
@@ -472,6 +480,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
         result
         verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
           .withRequestBody(equalToJson(validSubmissionIPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, UNAUTHORIZED, "error message"), false, true))
         )
       }
     }
@@ -511,6 +527,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
           .withRequestBody(equalToJson(validSubmissionIPBody(ninoWithoutSuffix), false, true))
         )
       }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, FORBIDDEN, "error message"), false, true))
+        )
+      }
     }
 
     "submitting an application which results in a BadRequest response" should {
@@ -540,6 +564,22 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
         testMocks()
         result.body shouldBe badRequestResultBody(ninoWithoutSuffix, "error message")
       }
+
+      "submit the correct json to nps" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
+          .withRequestBody(equalToJson(validSubmissionIPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 3, BAD_REQUEST, "error message"), false, true))
+        )
+      }
     }
 
     "submitting a successful application for FP2016" should {
@@ -559,7 +599,6 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def result: WSResponse = client(s"individuals/$nino/protections").post(validCreateFPBody(ninoWithoutSuffix)).futureValue
 
-      //      lazy val result = CreateProtectionsController.applyForProtection("AA10001A").apply(fakeRequest(validCreateBody(ninoWithoutSuffix)))
       "return a success response" in {
         testMocks()
         result.status shouldBe 200
@@ -575,6 +614,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
         result
         verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit"))
+          .withRequestBody(equalToJson(sucessfulAuditResult(nino, ninoWithoutSuffix, 1, OK), false, true))
         )
       }
     }
@@ -614,6 +661,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
         )
       }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit"))
+          .withRequestBody(equalToJson(sucessfulAuditResult(nino, ninoWithoutSuffix, 1, CONFLICT), false, true))
+        )
+      }
     }
 
     "submitting an FP application which results in a Service Unavailable response" should {
@@ -649,6 +704,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
         result
         verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 1, SERVICE_UNAVAILABLE, "error message"), false, true))
         )
       }
     }
@@ -688,6 +751,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
         )
       }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 1, BAD_GATEWAY, "error message"), false, true))
+        )
+      }
     }
 
     "submitting an FP application which results in a Unauthorised response" should {
@@ -723,6 +794,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
         result
         verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 1, UNAUTHORIZED, "error message"), false, true))
         )
       }
     }
@@ -762,6 +841,14 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
           .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
         )
       }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 1, FORBIDDEN, "error message"), false, true))
+        )
+      }
     }
 
     "submitting an FP application which results in a BadRequest response" should {
@@ -790,6 +877,22 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       "includes a body with the error message" in {
         testMocks()
         result.body shouldBe badRequestResultBody(ninoWithoutSuffix, "error message")
+      }
+
+      "submit the correct json to nps" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo(s"/pensions-lifetime-allowance/individual/$ninoWithoutSuffix/protection"))
+          .withRequestBody(equalToJson(validSubmissionFPBody(ninoWithoutSuffix), false, true))
+        )
+      }
+
+      "submit the correct auditing data" in {
+        testMocks()
+        result
+        verify(postRequestedFor(urlEqualTo("/write/audit/merged"))
+          .withRequestBody(equalToJson(failureAuditResponse(nino, ninoWithoutSuffix, 1, BAD_REQUEST, "error message"), false, true))
+        )
       }
     }
   }
