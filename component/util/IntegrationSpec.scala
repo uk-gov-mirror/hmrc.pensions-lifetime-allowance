@@ -16,9 +16,13 @@
 
 package util
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers}
 import org.scalatestplus.play.OneServerPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -26,6 +30,12 @@ trait IntegrationSpec extends UnitSpec
   with OneServerPerSuite with ScalaFutures with IntegrationPatience with Matchers
   with WiremockHelper with BeforeAndAfterEach with BeforeAndAfterAll {
 
+  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(fakeConfig())
+    .build()
+
+  implicit val actorSystem: ActorSystem = ActorSystem()
+  implicit val mat: Materializer = ActorMaterializer()
   implicit val hc: HeaderCarrier = new HeaderCarrier()
 
   override def beforeEach(): Unit = {
@@ -42,6 +52,56 @@ trait IntegrationSpec extends UnitSpec
     super.afterAll()
   }
 
+  def mockAuth(status: Int, nino: String): Unit = {
+    stubGet("/auth/authority", status,
+      s"""
+         |{
+         |"uri":"/auth/oid/1234567890",
+         |"loggedInAt": "2014-06-09T14:57:09.522Z",
+         |"previouslyLoggedInAt": "2014-06-09T14:48:24.841Z",
+         |"credentials":{"gatewayId":"xxx2"},
+         |"accounts":{},
+         |"levelOfAssurance": "2",
+         |"confidenceLevel" : 200,
+         |"credentialStrength": "strong",
+         |"legacyOid":"1234567890",
+         |"userDetailsLink":"http://localhost:11111/auth/userDetails",
+         |"ids":"/auth/ids"
+         |}""".stripMargin
+    )
+
+    stubGet(s"/authorise/write/paye/$nino\\?confidenceLevel=200", status,
+      s"""
+         |{
+         |"uri":"/auth/oid/1234567890",
+         |"loggedInAt": "2014-06-09T14:57:09.522Z",
+         |"previouslyLoggedInAt": "2014-06-09T14:48:24.841Z",
+         |"credentials":{"gatewayId":"xxx2"},
+         |"accounts":{},
+         |"levelOfAssurance": "2",
+         |"confidenceLevel" : 200,
+         |"credentialStrength": "strong",
+         |"legacyOid":"1234567890",
+         |"userDetailsLink":"http://localhost:11111/auth/userDetails",
+         |"ids":"/auth/ids"
+         |}""".stripMargin
+    )
+
+    stubGet("/auth/ids", status, """{"internalId":"Int-xxx","externalId":"Ext-xxx"}""")
+
+    stubGet("/auth/userDetails", status,
+      """
+        |{
+        |   "name":"xxx",
+        |   "email":"xxx",
+        |   "affinityGroup":"xxx",
+        |   "authProviderId":"123456789",
+        |   "authProviderType":"xxx"
+        |}
+      """.stripMargin
+    )
+  }
+
   def mockCitizenDetails(nino: String, status: Int): Unit = {
     val url = s"/citizen-details/$nino/designatory-details"
     stubGet(url, status, "")
@@ -50,36 +110,11 @@ trait IntegrationSpec extends UnitSpec
   def mockAudit(status: Int): Unit = {
     val url = s"/write/audit"
     stubPost(url, status, "audit-response")
+    stubPost(url + "/merged", status, "audit-response")
   }
 
-  def mockNPSConnector(nino: String, status: Int): Unit = {
+  def mockNPSConnector(nino: String, status: Int, body: String): Unit = {
     val url = s"/pensions-lifetime-allowance/individual/$nino/protection"
-    stubPost(url, status,
-      s"""
-        |{
-        |    "nino": "$nino",
-        |    "pensionSchemeAdministratorCheckReference": "PSA12345678A",
-        |    "protection": {
-        |        "id": 1,
-        |        "version": 1,
-        |        "type": 0,
-        |        "certificateDate": "2015-05-22",
-        |        "certificateTime": "12:22:59",
-        |        "status": 1,
-        |        "protectionReference": "IP141234567890C",
-        |        "relevantAmount": 1250000,
-        |        "preADayPensionInPayment": 250000,
-        |        "postADayBCE": 250000,
-        |        "uncrystallisedRights": 500000,
-        |        "nonUKRights": 250000,
-        |        "pensionDebitAmount": 0,
-        |        "notificationID": 5,
-        |        "protectedAmount": 600000,
-        |        "pensionDebitEnteredAmount": 300,
-        |        "pensionDebitStartDate": "2015-01-29",
-        |        "pensionDebitTotalAmount": 800
-        |    }
-        |}
-      """.stripMargin)
+    stubPost(url, status, body)
   }
 }
