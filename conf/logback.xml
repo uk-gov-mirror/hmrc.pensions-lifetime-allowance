@@ -43,6 +43,14 @@
         <appender-ref ref="STDOUT_IGNORE_NETTY" />
     </logger>
 
+    <logger name="org.eclipse.jetty" level="OFF"/>
+
+    <logger name="org.apache.http" level="OFF"/>
+
+    <logger name="sun.net.www.protocol.http" level="OFF"/>
+
+    <logger name="io.netty.util.internal" level="OFF"/>
+
     <logger name="uk.gov" level="INFO"/>
 
     <logger name="com.google.inject" level="WARN"/>
