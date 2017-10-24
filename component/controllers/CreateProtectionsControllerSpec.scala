@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package util.controllers
+package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import config.MicroserviceAuthConnector
-import controllers.CreateProtectionsController
-import util.IntegrationSpec
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 import play.api.test.{FakeHeaders, FakeRequest}
+import util.IntegrationSpec
 
 class CreateProtectionsControllerSpec extends IntegrationSpec {
 
