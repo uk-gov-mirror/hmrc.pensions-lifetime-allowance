@@ -86,4 +86,3 @@ trait FakeConfig {
     "microservice.services.citizen-details.checkRequired" -> "true"
   ) ++ additionalConfig
 }
-
