@@ -59,7 +59,7 @@ trait WiremockHelper extends FakeConfig {
     )
   }
 
-  def stubPatch(url: String, status: Integer, responseBody: String): StubMapping =
+  def stubPatch(url: String, status: Integer, responseBody: String): StubMapping = {
     stubFor(patch(urlMatching(url))
       .willReturn(
         aResponse().
@@ -67,6 +67,18 @@ trait WiremockHelper extends FakeConfig {
           withBody(responseBody)
       )
     )
+  }
+
+  def stubPut(url: String, status: Integer, responseBody: String): StubMapping = {
+    removeStub(put(urlMatching(url)))
+    stubFor(put(urlMatching(url))
+      .willReturn(
+        aResponse().
+          withStatus(status).
+          withBody(responseBody)
+      )
+    )
+  }
 }
 
 
