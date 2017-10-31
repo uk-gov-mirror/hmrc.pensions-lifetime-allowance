@@ -117,4 +117,10 @@ trait IntegrationSpec extends UnitSpec
     val url = s"/pensions-lifetime-allowance/individual/$nino/protection"
     stubPost(url, status, body)
   }
+
+  def mockAmend(nino: String, status: Int, body: String, id: Long): Unit = {
+    val url = s"/pensions-lifetime-allowance/individual/$nino/protections/$id"
+    stubPut(url, status, body)
+  }
+
 }
