@@ -192,7 +192,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
   "AmendProtectionsController" when {
 
-    "Amending a IP2016 application" should {
+    "amending an IP2016 application" should {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
@@ -479,7 +479,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "Amending a IP2014 application" should {
+    "amending an IP2014 application" should {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
