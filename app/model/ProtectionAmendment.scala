@@ -16,7 +16,8 @@
 
 package model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
+import _root_.util.Transformers
 
 case class ProtectionAmendment (
   protectionType: String,  // must be either "IP2014" or "IP2016"
@@ -32,5 +33,28 @@ case class ProtectionAmendment (
   withdrawnDate:Option[String] =None)
 
 object ProtectionAmendment {
-  implicit val protectionAmendmentFormat = Json.format[ProtectionAmendment]
+
+  implicit val protectionAmendmentFormat = {
+    val jsonWrites: Writes[ProtectionAmendment] = new Writes[ProtectionAmendment] {
+      override def writes(o: ProtectionAmendment): JsValue = JsObject(Json.obj(
+        "pensionDebits" -> o.pensionDebits,
+        "protection" -> JsObject(Json.obj(
+          "type" -> Transformers.typeToInt(o.protectionType),
+          "status" -> Transformers.statusToInt(o.status),
+          "version" -> o.version,
+          "relevantAmount" -> o.relevantAmount,
+          "postADayBCE" -> o.postADayBenefitCrystallisationEvents,
+          "preADayPensionInPayment" -> o.preADayPensionInPayment,
+          "withdrawnDate" -> o.withdrawnDate,
+          "uncrystallisedRights" -> o.uncrystallisedRights,
+          "nonUKRights" -> o.nonUKRights,
+          "pensionDebitTotalAmount" -> o.pensionDebitTotalAmount
+        ).fields.filterNot(_._2 == JsNull))
+      ).fields.filterNot(_._2 == JsNull))
+    }
+
+    val jsonReads = Json.reads[ProtectionAmendment]
+
+    Format(jsonReads, jsonWrites)
+  }
 }

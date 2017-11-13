@@ -30,8 +30,6 @@ case class ProtectionApplication(
 
 object ProtectionApplication {
 
-  val typeToInt: String => Int = protectionType => Transformers.protectionTypes.indexOf(protectionType)
-
   val jsonReads = Json.reads[ProtectionApplication]
 
   val jsonWrites: Writes[ProtectionApplication] = new Writes[ProtectionApplication] {
@@ -39,7 +37,7 @@ object ProtectionApplication {
       JsObject(Json.obj(
         "pensionDebits" -> o.pensionDebits,
         "protection" -> JsObject(Json.obj(
-          "type" -> typeToInt(o.protectionType),
+          "type" -> Transformers.typeToInt(o.protectionType),
           "relevantAmount" -> o.relevantAmount,
           "postADayBCE" -> o.postADayBenefitCrystallisationEvents,
           "preADayPensionInPayment" -> o.preADayPensionInPayment,

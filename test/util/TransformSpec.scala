@@ -32,14 +32,6 @@ object TransformSpec {
 
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  val fp2016ApplicationRequestBody = Json.parse(
-      """
-        | {
-        |   "protectionType": "FP2016"
-        | }
-      """.stripMargin
-    ).as[JsObject]
-
   val testNino = randomNino
   val (testNinoWithoutSuffix, testNinoSuffixChar) = dropNinoSuffix(testNino)
 
@@ -118,77 +110,12 @@ object TransformSpec {
        |  ]
        |}
      """.stripMargin).as[JsObject]
-
-  val ip2016ApplicationRequestBody=Json.parse(
-    s"""
-       | {
-       |   "protectionType": "IP2016",
-       |   "postADayBenefitCrystallisationEvents": 100000.00,
-       |   "preADayPensionInPayment": 100000.00,
-       |   "uncrystallisedRights": 200000.00,
-       |   "nonUKRights": 800000.00,
-       |   "relevantAmount": 1200000.00
-       | }
-     """.stripMargin).as[JsObject]
-
-
-  val ip2016AmendmentRequestBody= Json.parse(
-    s"""
-       |{
-       |  "protectionType": "IP2016",
-       |  "version": 1,
-       |  "status": "Open",
-       |  "postADayBenefitCrystallisationEvents": 100000.00,
-       |  "preADayPensionInPayment": 100000.00,
-       |  "uncrystallisedRights": 200000.00,
-       |  "nonUKRights": 800000.00,
-       |  "relevantAmount": 1200000.00,
-       |  "withdrawnDate":"2015-12-01"
-       |  }
-     """.stripMargin).as[JsObject]
-
-  val ip2016ApplicationRequestWithPensionDebitsBody = Json.parse(
-    s"""
-       | {
-       |  "protectionType": "IP2016",
-       |  "postADayBenefitCrystallisationEvents": 100000.00,
-       |  "preADayPensionInPayment": 100000.00,
-       |  "uncrystallisedRights": 200000.00,
-       |  "nonUKRights": 800000.00,
-       |  "relevantAmount": 1200000.00,
-       |  "pensionDebits": [
-       |    {
-       |      "startDate": "2016-6-29",
-       |      "amount": 4000.00
-       |    },
-       |    {
-       |      "startDate": "2016-4-1",
-       |      "amount": 623000.00
-       |    }
-       |  ]
-       | }
-     """.stripMargin
-  ).as[JsObject]
 }
 
-class TransformSpec extends UnitSpec{
+class TransformSpec extends UnitSpec {
 
   import Transformers._
   import TransformSpec._
-
-  "A valid received FP2016 protection application request" should {
-    "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, fp2016ApplicationRequestBody)
-      val topLevelFields=npsRequestBody.get.value
-      topLevelFields.size shouldBe 2
-      topLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
-      val protection=topLevelFields.get("protection")
-      protection.isDefined shouldBe true
-      val protectionFields = protection.get.as[JsObject].value
-      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 1
-      protectionFields.size shouldBe 1
-    }
-  }
 
   "A valid NPS response to a successful FP2016 Create Lifetime Allowance request" should {
     "transform to a successful and valid FP2016 application response body for the original MDTP client request" in {
@@ -218,80 +145,6 @@ class TransformSpec extends UnitSpec{
       topLevelFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       topLevelFields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       topLevelFields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
-    }
-  }
-
-  "A valid received IP2016 protection application request" should {
-    "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestBody)
-
-      val npsTopLevelFields=npsRequestBody.get.value
-      npsTopLevelFields.size shouldBe 2
-      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
-      val protection=npsTopLevelFields.get("protection")
-      protection.isDefined shouldBe true
-      val protectionFields = protection.get.as[JsObject].value
-      protectionFields.size shouldBe 6
-      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
-      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
-      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
-      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
-    }
-  }
-
-  "A valid received IP2016 protection amendment request" should {
-    "transform to a valid NPS Amend Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, Some(testProtectionId), ip2016AmendmentRequestBody)
-
-      val npsTopLevelFields=npsRequestBody.get.value
-      npsTopLevelFields.size shouldBe 2
-      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
-      val protection=npsTopLevelFields.get("protection")
-      protection.isDefined shouldBe true
-      val protectionFields = protection.get.as[JsObject].value
-      protectionFields.size shouldBe 10
-      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
-      protectionFields.get("id").get.as[JsNumber].value.toInt shouldBe testProtectionId
-      protectionFields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
-      protectionFields.get("status").get.as[JsNumber].value.toInt shouldBe 1
-      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
-      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
-      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
-    }
-  }
-
-  "A valid received IP2016 protection application request with pension debits" should {
-    "transform to a valid NPS Create Lifetime Allowance request body" in {
-      val npsRequestBody = transformApplyOrAmendRequestBody(testNinoWithoutSuffix, None, ip2016ApplicationRequestWithPensionDebitsBody)
-
-      val npsTopLevelFields=npsRequestBody.get.value
-      npsTopLevelFields.size shouldBe 3
-      npsTopLevelFields.get("nino").get.as[JsString].value shouldEqual testNinoWithoutSuffix
-      val protection=npsTopLevelFields.get("protection")
-      protection.isDefined shouldBe true
-      val protectionFields = protection.get.as[JsObject].value
-      protectionFields.size shouldBe 6
-      protectionFields.get("type").get.as[JsNumber].value.toInt shouldBe 3
-      protectionFields.get("postADayBCE").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("preADayPensionInPayment").get.as[JsNumber].value.toFloat shouldBe 100000.00
-      protectionFields.get("uncrystallisedRights").get.as[JsNumber].value.toFloat shouldBe 200000.00
-      protectionFields.get("nonUKRights").get.as[JsNumber].value.toFloat shouldBe 800000.00
-      protectionFields.get("relevantAmount").get.as[JsNumber].value.toFloat shouldBe 1200000.00
-
-      // check penssion debits
-      val pd=npsTopLevelFields.get("pensionDebits")
-      val pdItems = pd.get.as[JsArray].value
-      pdItems.size shouldBe 2
-      val pd1 = pdItems(0).as[JsObject]
-      pd1.value.get("pensionDebitEnteredAmount").get.as[JsNumber].value.toFloat shouldEqual 4000.00
-      pd1.value.get("pensionDebitStartDate").get.as[JsString].value shouldBe "2016-6-29"
-      val pd2 = pdItems(1).as[JsObject]
-      pd2.value.get("pensionDebitEnteredAmount").get.as[JsNumber].value.toFloat shouldEqual 623000.00
-      pd2.value.get("pensionDebitStartDate").get.as[JsString].value shouldBe "2016-4-1"
     }
   }
 
@@ -333,6 +186,83 @@ class TransformSpec extends UnitSpec{
       p2Fields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       p2Fields.get("status").get.as[JsString].value shouldBe "Unsuccessful"
       p2Fields.get("notificationId").get.as[JsNumber].value.toInt shouldBe 10
+    }
+  }
+
+  "Transformers" should {
+
+    "convert a protection type to its' corresponding index" when {
+
+      "supplied with an Unknown protection" in {
+        Transformers.typeToInt("Unknown") shouldBe 0
+      }
+
+      "supplied with an FP2016 protection" in {
+        Transformers.typeToInt("FP2016") shouldBe 1
+      }
+
+      "supplied with an IP2014 protection" in {
+        Transformers.typeToInt("IP2014") shouldBe 2
+      }
+
+      "supplied with an IP2016 protection" in {
+        Transformers.typeToInt("IP2016") shouldBe 3
+      }
+
+      "supplied with a Primary protection" in {
+        Transformers.typeToInt("Primary") shouldBe 4
+      }
+
+      "supplied with a Enhanced protection" in {
+        Transformers.typeToInt("Enhanced") shouldBe 5
+      }
+
+      "supplied with a Fixed protection" in {
+        Transformers.typeToInt("Fixed") shouldBe 6
+      }
+
+      "supplied with a FP2014 protection" in {
+        Transformers.typeToInt("FP2014") shouldBe 7
+      }
+
+      "supplied with a non-recognised protection" in {
+        Transformers.typeToInt("") shouldBe -1
+      }
+    }
+
+    "convert a status to its' corresponding index" when {
+
+      "supplied with a status of Unknown" in {
+        Transformers.statusToInt("Unknown") shouldBe 0
+      }
+
+      "supplied with a status of Open" in {
+        Transformers.statusToInt("Open") shouldBe 1
+      }
+
+      "supplied with a status of Dormant" in {
+        Transformers.statusToInt("Dormant") shouldBe 2
+      }
+
+      "supplied with a status of Withdrawn" in {
+        Transformers.statusToInt("Withdrawn") shouldBe 3
+      }
+
+      "supplied with a status of Expired" in {
+        Transformers.statusToInt("Expired") shouldBe 4
+      }
+
+      "supplied with a status of Unsuccessful" in {
+        Transformers.statusToInt("Unsuccessful") shouldBe 5
+      }
+
+      "supplied with a status of Rejected" in {
+        Transformers.statusToInt("Rejected") shouldBe 6
+      }
+
+      "supplied with a non-recognised status" in {
+        Transformers.statusToInt("") shouldBe -1
+      }
     }
   }
 }
