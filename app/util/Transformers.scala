@@ -37,7 +37,7 @@ object Transformers {
 
   private def copyIfExists(name: String): Reads[JsObject] = renameIfExists(name,name)
 
-  def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
+  private def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsString].map(s => JsNumber(lookupTable.indexOf(s.value))))
 
   private def string2IntIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
