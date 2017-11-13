@@ -17,15 +17,14 @@
 package util
 
 import play.api.libs.json._
-
 import uk.gov.hmrc.play.test.UnitSpec
-
-import NinoHelper.dropNinoSuffix
+import _root_.util.NinoHelper.dropNinoSuffix
 
 object TransformSpec {
 
-  import uk.gov.hmrc.domain.Generator
   import java.util.Random
+
+  import uk.gov.hmrc.domain.Generator
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
@@ -40,40 +39,40 @@ object TransformSpec {
 
   val successfulCreateFP2016NPSResponseBody = Json.parse(
     s"""
-      |  {
-      |      "nino": "${testNinoWithoutSuffix}",
-      |      "psaCheckReference" : "PSA123456789",
-      |      "protection": {
-      |        "id": ${testProtectionId},
-      |        "version": ${testProtectionVersion},
-      |        "type": 1,
-      |        "certificateDate": "2015-05-22",
-      |        "certificateTime": "12:22:59",
-      |        "status": 1,
-      |        "protectionReference": "FP161234567890C",
-      |        "relevantAmount": 1250000.00,
-      |        "protectedAmount": 1250000.00,
-      |        "notificationID": 12
-      |      }
-      |    }
-      |
+       |  {
+       |      "nino": "${testNinoWithoutSuffix}",
+       |      "psaCheckReference" : "PSA123456789",
+       |      "protection": {
+       |        "id": ${testProtectionId},
+       |        "version": ${testProtectionVersion},
+       |        "type": 1,
+       |        "certificateDate": "2015-05-22",
+       |        "certificateTime": "12:22:59",
+       |        "status": 1,
+       |        "protectionReference": "FP161234567890C",
+       |        "relevantAmount": 1250000.00,
+       |        "protectedAmount": 1250000.00,
+       |        "notificationID": 12
+       |      }
+       |    }
+       |
     """.stripMargin).as[JsObject]
 
-  val unsuccessfulCreateIP2014NPSResponseBody= Json.parse(
+  val unsuccessfulCreateIP2014NPSResponseBody = Json.parse(
     s"""
-      |  {
-      |      "nino": "${testNinoWithoutSuffix}",
-      |      "protection": {
-      |        "id": ${testProtectionId},
-      |        "version": ${testProtectionVersion},
-      |        "type": 2,
-      |        "status": 5,
-      |        "notificationID": 10
-      |      }
-      |  }
+       |  {
+       |      "nino": "${testNinoWithoutSuffix}",
+       |      "protection": {
+       |        "id": ${testProtectionId},
+       |        "version": ${testProtectionVersion},
+       |        "type": 2,
+       |        "status": 5,
+       |        "notificationID": 10
+       |      }
+       |  }
     """.stripMargin).as[JsObject]
 
-  val emptyReadProtectionsNPSResponseBody=Json.parse(
+  val emptyReadProtectionsNPSResponseBody = Json.parse(
     s"""
        |{
        |  "nino" : "${testNinoWithoutSuffix}",
@@ -82,7 +81,7 @@ object TransformSpec {
        |}
      """.stripMargin).as[JsObject]
 
-  val readProtectionsNPSResponseBody =Json.parse(
+  val readProtectionsNPSResponseBody = Json.parse(
     s"""
        |{
        |  "nino" : "${testNinoWithoutSuffix}",
@@ -114,8 +113,8 @@ object TransformSpec {
 
 class TransformSpec extends UnitSpec {
 
-  import Transformers._
   import TransformSpec._
+  import Transformers._
 
   "A valid NPS response to a successful FP2016 Create Lifetime Allowance request" should {
     "transform to a successful and valid FP2016 application response body for the original MDTP client request" in {
@@ -167,10 +166,10 @@ class TransformSpec extends UnitSpec {
       topLevelFields.get("nino").get.as[JsString].value shouldEqual testNino
       topLevelFields.get("psaCheckReference").get.as[JsString].value shouldBe "PSA123456789"
 
-      val protections=topLevelFields.get("lifetimeAllowanceProtections").get.as[JsArray].value
+      val protections = topLevelFields.get("lifetimeAllowanceProtections").get.as[JsArray].value
       protections.size shouldBe 2
 
-      val p1Fields=protections(0).as[JsObject].value
+      val p1Fields = protections(0).as[JsObject].value
       p1Fields.get("protectionID").get.as[JsNumber].value.toInt shouldBe testProtectionId
       p1Fields.get("version").get.as[JsNumber].value.toInt shouldBe testProtectionVersion
       p1Fields.get("protectionType").get.as[JsString].value shouldBe "FP2016"

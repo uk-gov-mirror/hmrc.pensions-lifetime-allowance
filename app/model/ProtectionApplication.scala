@@ -16,8 +16,8 @@
 
 package model
 
-import play.api.libs.json._
 import _root_.util.Transformers
+import play.api.libs.json._
 
 case class ProtectionApplication(
                                   protectionType: String,
@@ -30,23 +30,25 @@ case class ProtectionApplication(
 
 object ProtectionApplication {
 
-  val jsonReads = Json.reads[ProtectionApplication]
+  implicit val protectionApplicationFormat = {
+    val jsonReads = Json.reads[ProtectionApplication]
 
-  val jsonWrites: Writes[ProtectionApplication] = new Writes[ProtectionApplication] {
-    override def writes(o: ProtectionApplication): JsValue = {
-      JsObject(Json.obj(
-        "pensionDebits" -> o.pensionDebits,
-        "protection" -> JsObject(Json.obj(
-          "type" -> Transformers.typeToInt(o.protectionType),
-          "relevantAmount" -> o.relevantAmount,
-          "postADayBCE" -> o.postADayBenefitCrystallisationEvents,
-          "preADayPensionInPayment" -> o.preADayPensionInPayment,
-          "uncrystallisedRights" -> o.uncrystallisedRights,
-          "nonUKRights" -> o.nonUKRights
+    val jsonWrites: Writes[ProtectionApplication] = new Writes[ProtectionApplication] {
+      override def writes(o: ProtectionApplication): JsValue = {
+        JsObject(Json.obj(
+          "pensionDebits" -> o.pensionDebits,
+          "protection" -> JsObject(Json.obj(
+            "type" -> Transformers.typeToInt(o.protectionType),
+            "relevantAmount" -> o.relevantAmount,
+            "postADayBCE" -> o.postADayBenefitCrystallisationEvents,
+            "preADayPensionInPayment" -> o.preADayPensionInPayment,
+            "uncrystallisedRights" -> o.uncrystallisedRights,
+            "nonUKRights" -> o.nonUKRights
+          ).fields.filterNot(_._2 == JsNull))
         ).fields.filterNot(_._2 == JsNull))
-      ).fields.filterNot(_._2 == JsNull))
+      }
     }
-  }
 
-  implicit val protectionApplicationFormat = Format(jsonReads, jsonWrites)
+    Format(jsonReads, jsonWrites)
+  }
 }

@@ -16,9 +16,9 @@
 
 package util
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads._
+import play.api.libs.json._
 
 object Transformers {
   val protectionTypes = Vector(
@@ -39,7 +39,7 @@ object Transformers {
   private def renameIfExists(origName: String, newName: String): Reads[JsObject] =
     rename(origName, newName) orElse Reads.pure(Json.obj())
 
-  private def copyIfExists(name: String): Reads[JsObject] = renameIfExists(name,name)
+  private def copyIfExists(name: String): Reads[JsObject] = renameIfExists(name, name)
 
   private def int2String(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsNumber].map(n => JsString(lookupTable(n.value.toInt))))
@@ -51,8 +51,8 @@ object Transformers {
     * Transform a received NPS response for an Application or Amendment request into that to be returned to the client of
     * this service.
     *
-    * @param ninoSuffix the last character of the NINO associated with the request - needs to be appended to the
-    *                   NINO returned by the DES API
+    * @param ninoSuffix      the last character of the NINO associated with the request - needs to be appended to the
+    *                        NINO returned by the DES API
     * @param npsResponseJson the json body received from NPS in response to a Create Lifetime Allowance request.
     * @return a Json body for return to the MDTP service client.
     */
@@ -64,12 +64,12 @@ object Transformers {
     def copyToTopLevelIfExists(fieldName: String) = copyToTopLevel(fieldName) orElse Reads.pure(Json.obj())
 
     def copyProtectionDetailsToTopLevel: Reads[JsObject] =
-       copyToTopLevelIfExists("id") andThen renameIfExists("id","protectionID") and
+      copyToTopLevelIfExists("id") andThen renameIfExists("id", "protectionID") and
         copyToTopLevelIfExists("version") and
         (copyToTopLevel("type") andThen rename("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
         (copyToTopLevelIfExists("status") andThen int2StringIfExists("status", protectionStatuses)) and
         copyToTopLevelIfExists("relevantAmount") and
-        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
+        (copyToTopLevelIfExists("postADayBCE") andThen renameIfExists("postADayBCE", "postADayBenefitCrystallisationEvents")) and
         copyToTopLevelIfExists("preADayPensionInPayment") and
         copyToTopLevelIfExists("uncrystallisedRights") and
         copyToTopLevelIfExists("withdrawnDate") and
@@ -80,7 +80,7 @@ object Transformers {
         copyToTopLevelIfExists("pensionDebitTotalAmount") and
         copyToTopLevelIfExists("protectedAmount") and
         (copyToTopLevelIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
-        copyToTopLevelIfExists("protectionReference")  reduce
+        copyToTopLevelIfExists("protectionReference") reduce
 
     def readCertificateDateOpt = (__ \ "protection" \ "certificateDate").readNullable[String]
     def readCertificateTimeOpt = (__ \ "protection" \ "certificateTime").readNullable[String]
@@ -98,18 +98,18 @@ object Transformers {
       }
     }
 
-    val certificateDateOpt=iso8601CertDateOpt
+    val certificateDateOpt = iso8601CertDateOpt
 
     val toMdtpProtection =
       ((__ \ 'nino).json.update(of[JsString].map { case JsString(s) => JsString(s + ninoSuffix) }) and
-        renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference")  and
-       copyProtectionDetailsToTopLevel and
-      (
-        // replace certificate date with full ISO8601 date/time
-        copyToTopLevelIfExists("certificateDate")
-          andThen (__ \ "certificateDate").json.update(of[JsString].map { s => JsString(iso8601CertDateOpt.get) })
-          orElse Reads.pure(Json.obj())
-      ) reduce) andThen (__ \ "protection").json.prune
+        renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference") and
+        copyProtectionDetailsToTopLevel and
+        (
+          // replace certificate date with full ISO8601 date/time
+          copyToTopLevelIfExists("certificateDate")
+            andThen (__ \ "certificateDate").json.update(of[JsString].map { s => JsString(iso8601CertDateOpt.get) })
+            orElse Reads.pure(Json.obj())
+          ) reduce) andThen (__ \ "protection").json.prune
 
     npsResponseJson.transform(toMdtpProtection)
   }
@@ -138,22 +138,22 @@ object Transformers {
 
     def npsToMdtpProtectionWithoutCertDate =
       rename("id", "protectionID") and
-      copyIfExists("version") and
-      (renameIfExists("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
-      (copyIfExists("status") andThen int2String("status", protectionStatuses)) and
-      copyIfExists("protectedAmount") and
-      copyIfExists("relevantAmount") and
-      (copyIfExists("postADayBCE") andThen renameIfExists("postADayBCE","postADayBenefitCrystallisationEvents")) and
-      copyIfExists("preADayPensionInPayment") and
-      copyIfExists("uncrystallisedRights") and
-      copyIfExists("withdrawnDate") and
-      copyIfExists("nonUKRights") and
-      copyIfExists("pensionDebitAmount") and
-      copyIfExists("pensionDebitEnteredAmount") and
-      copyIfExists("pensionDebitStartDate") and
-      copyIfExists("pensionDebitTotalAmount") and
-      (copyIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
-      copyIfExists("protectionReference") reduce
+        copyIfExists("version") and
+        (renameIfExists("type", "protectionType") andThen int2String("protectionType", protectionTypes)) and
+        (copyIfExists("status") andThen int2String("status", protectionStatuses)) and
+        copyIfExists("protectedAmount") and
+        copyIfExists("relevantAmount") and
+        (copyIfExists("postADayBCE") andThen renameIfExists("postADayBCE", "postADayBenefitCrystallisationEvents")) and
+        copyIfExists("preADayPensionInPayment") and
+        copyIfExists("uncrystallisedRights") and
+        copyIfExists("withdrawnDate") and
+        copyIfExists("nonUKRights") and
+        copyIfExists("pensionDebitAmount") and
+        copyIfExists("pensionDebitEnteredAmount") and
+        copyIfExists("pensionDebitStartDate") and
+        copyIfExists("pensionDebitTotalAmount") and
+        (copyIfExists("notificationID") andThen renameIfExists("notificationID", "notificationId")) and
+        copyIfExists("protectionReference") reduce
 
     def npsToMdtpProtection(npsProtection: JsObject) = {
       val withoutCertDate = npsProtection.transform(npsToMdtpProtectionWithoutCertDate)
@@ -175,19 +175,24 @@ object Transformers {
       errors => throw new Exception("Unable to parse protection list. " + errors),
       protListOpt => protListOpt map { protList =>
         JsArray(protList map { protJsObj =>
-          npsToMdtpProtection(protJsObj)}
+          npsToMdtpProtection(protJsObj)
+        }
         )
       }
     )
 
     val putProtectionsIfExist: Reads[JsObject] = mdtpProtectionList.map { protArray =>
-      (__ \ "lifetimeAllowanceProtections").json.put { protArray }
-    } getOrElse { Reads.pure(Json.obj()) }
+      (__ \ "lifetimeAllowanceProtections").json.put {
+        protArray
+      }
+    } getOrElse {
+      Reads.pure(Json.obj())
+    }
 
     val toMdtpResponse =
       ((__ \ 'nino).json.update(of[JsString].map { case JsString(s) => JsString(s + ninoSuffix) }) and
-      renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference")  and
-      putProtectionsIfExist reduce)
+        renameIfExists("pensionSchemeAdministratorCheckReference", "psaCheckReference") and
+        putProtectionsIfExist reduce)
 
     npsResponseJson.transform(toMdtpResponse)
   }

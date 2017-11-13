@@ -16,25 +16,27 @@
 
 package model
 
-import play.api.libs.json._
 import _root_.util.Transformers
+import play.api.libs.json._
 
-case class ProtectionAmendment (
-  protectionType: String,  // must be either "IP2014" or "IP2016"
-  version: Int, // version of protection to update
-  status: String, // status of protection to update
-  relevantAmount: Double,
-  preADayPensionInPayment: Double,
-  postADayBenefitCrystallisationEvents: Double,
-  uncrystallisedRights: Double,
-  nonUKRights: Double,
-  pensionDebitTotalAmount: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None,
-  withdrawnDate:Option[String] =None)
+case class ProtectionAmendment(
+                                protectionType: String, // must be either "IP2014" or "IP2016"
+                                version: Int, // version of protection to update
+                                status: String, // status of protection to update
+                                relevantAmount: Double,
+                                preADayPensionInPayment: Double,
+                                postADayBenefitCrystallisationEvents: Double,
+                                uncrystallisedRights: Double,
+                                nonUKRights: Double,
+                                pensionDebitTotalAmount: Option[Double] = None,
+                                pensionDebits: Option[List[PensionDebit]] = None,
+                                withdrawnDate: Option[String] = None)
 
 object ProtectionAmendment {
 
   implicit val protectionAmendmentFormat = {
+    val jsonReads = Json.reads[ProtectionAmendment]
+
     val jsonWrites: Writes[ProtectionAmendment] = new Writes[ProtectionAmendment] {
       override def writes(o: ProtectionAmendment): JsValue = JsObject(Json.obj(
         "pensionDebits" -> o.pensionDebits,
@@ -52,8 +54,6 @@ object ProtectionAmendment {
         ).fields.filterNot(_._2 == JsNull))
       ).fields.filterNot(_._2 == JsNull))
     }
-
-    val jsonReads = Json.reads[ProtectionAmendment]
 
     Format(jsonReads, jsonWrites)
   }
