@@ -16,17 +16,39 @@
 
 package model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
+import _root_.util.Transformers
 
-case class ProtectionApplication (
-  protectionType: String,
-  relevantAmount: Option[Double] = None,
-  preADayPensionInPayment: Option[Double] = None,
-  postADayBenefitCrystallisationEvents: Option[Double] = None,
-  uncrystallisedRights: Option[Double] = None,
-  nonUKRights: Option[Double] = None,
-  pensionDebits: Option[List[PensionDebit]] = None)
+case class ProtectionApplication(
+                                  protectionType: String,
+                                  relevantAmount: Option[Double] = None,
+                                  preADayPensionInPayment: Option[Double] = None,
+                                  postADayBenefitCrystallisationEvents: Option[Double] = None,
+                                  uncrystallisedRights: Option[Double] = None,
+                                  nonUKRights: Option[Double] = None,
+                                  pensionDebits: Option[List[PensionDebit]] = None)
 
 object ProtectionApplication {
-  implicit val protectionApplicationFormat = Json.format[ProtectionApplication]
+
+  val typeToInt: String => Int = protectionType => Transformers.protectionTypes.indexOf(protectionType)
+
+  val jsonReads = Json.reads[ProtectionApplication]
+
+  val jsonWrites: Writes[ProtectionApplication] = new Writes[ProtectionApplication] {
+    override def writes(o: ProtectionApplication): JsValue = {
+      JsObject(Json.obj(
+        "pensionDebits" -> o.pensionDebits,
+        "protection" -> JsObject(Json.obj(
+          "type" -> typeToInt(o.protectionType),
+          "relevantAmount" -> o.relevantAmount,
+          "postADayBCE" -> o.postADayBenefitCrystallisationEvents,
+          "preADayPensionInPayment" -> o.preADayPensionInPayment,
+          "uncrystallisedRights" -> o.uncrystallisedRights,
+          "nonUKRights" -> o.nonUKRights
+        ).fields.filterNot(_._2 == JsNull))
+      ).fields.filterNot(_._2 == JsNull))
+    }
+  }
+
+  implicit val protectionApplicationFormat = Format(jsonReads, jsonWrites)
 }

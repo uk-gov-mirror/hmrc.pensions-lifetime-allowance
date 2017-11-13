@@ -21,7 +21,7 @@ import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 
 object Transformers {
-  private val protectionTypes = Vector(
+  val protectionTypes = Vector(
     "Unknown", "FP2016", "IP2014", "IP2016", "Primary", "Enhanced", "Fixed", "FP2014"
   )
 
@@ -37,7 +37,7 @@ object Transformers {
 
   private def copyIfExists(name: String): Reads[JsObject] = renameIfExists(name,name)
 
-  private def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
+  def string2Int(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =
     (__ \ fieldName).json.update(of[JsString].map(s => JsNumber(lookupTable.indexOf(s.value))))
 
   private def string2IntIfExists(fieldName: String, lookupTable: Seq[String]): Reads[JsObject] =

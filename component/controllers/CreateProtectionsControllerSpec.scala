@@ -130,7 +130,13 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
        |    "preADayPensionInPayment" : 1000.0,
        |    "postADayBenefitCrystallisationEvents" : 1000.0,
        |    "uncrystallisedRights" : 1000.0,
-       |    "nonUKRights": 1000.0
+       |    "nonUKRights": 1000.0,
+       |    "pensionDebits": [
+       |      {
+       |        "startDate": "2016-04-04",
+       |        "amount": 1001.0
+       |      }
+       |    ]
        |  }
     """.stripMargin).as[JsObject]
 
@@ -138,6 +144,12 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
     s"""
        |{
        |"nino" : "$ninoWithoutSuffix",
+       |"pensionDebits": [
+       |  {
+       |    "pensionDebitStartDate":  "2016-04-04",
+       |    "pensionDebitEnteredAmount": 1001.00
+       |  }
+       |],
        |"protection" : {
        |  "type" : 1,
        |  "relevantAmount" : 10000,

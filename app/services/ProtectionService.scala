@@ -17,15 +17,13 @@
 package services
 
 import connectors.NpsConnector
-import play.api.libs.json.{JsObject, JsResult}
+import model.HttpResponseDetails
 import play.api.http.Status
+import play.api.libs.json.{JsObject, JsResult, Json}
+import uk.gov.hmrc.http.HeaderCarrier
+import util.{NinoHelper, Transformers}
 
 import scala.concurrent.{ExecutionContext, Future}
-import util.{NinoHelper, Transformers}
-import model.HttpResponseDetails
-import play.mvc.BodyParser.Json
-import play.api.libs.json.Json.prettyPrint
-import uk.gov.hmrc.http.HeaderCarrier
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -37,19 +35,13 @@ trait ProtectionService {
 
   def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
-    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
-      ninoWithoutSuffix,
-      None,
-      applicationRequestBody)
-    npsRequestBody.fold(
-      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
-      req => nps.applyForProtection(nino, req) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap {
-          Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
-        }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    val npsRequestBody = Json.obj("nino" -> ninoWithoutSuffix) ++ applicationRequestBody
+    nps.applyForProtection(nino, npsRequestBody) map { npsResponse =>
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
       }
-    )
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
 
@@ -75,9 +67,11 @@ trait ProtectionService {
     val (_, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
 
     nps.readExistingProtections(nino) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformReadResponseBody(lastNinoCharOpt.get, _)
       }
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
 }

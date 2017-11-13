@@ -32,11 +32,13 @@ object TransformSpec {
 
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  import model.{ProtectionApplication, ProtectionAmendment, PensionDebit}
-
-  val fp2016ApplicationRequestBody = Json.toJson(ProtectionApplication(
-    protectionType = "FP2016"
-  )).as[JsObject]
+  val fp2016ApplicationRequestBody = Json.parse(
+      """
+        | {
+        |   "protectionType": "FP2016"
+        | }
+      """.stripMargin
+    ).as[JsObject]
 
   val testNino = randomNino
   val (testNinoWithoutSuffix, testNinoSuffixChar) = dropNinoSuffix(testNino)
@@ -145,15 +147,28 @@ object TransformSpec {
        |  }
      """.stripMargin).as[JsObject]
 
-  val ip2016ApplicationRequestWithPensionDebitsBody=Json.toJson(ProtectionApplication(
-    protectionType = "IP2016",
-    postADayBenefitCrystallisationEvents = Some(100000.00),
-    preADayPensionInPayment = Some(100000.00),
-    uncrystallisedRights = Some(200000.00),
-    nonUKRights = Some(800000.00),
-    pensionDebits = Some(List(PensionDebit("2016-6-29", 4000.00),PensionDebit("2016-4-1", 623000.00))),
-    relevantAmount = Some(1200000.00)
-  )).as[JsObject]
+  val ip2016ApplicationRequestWithPensionDebitsBody = Json.parse(
+    s"""
+       | {
+       |  "protectionType": "IP2016",
+       |  "postADayBenefitCrystallisationEvents": 100000.00,
+       |  "preADayPensionInPayment": 100000.00,
+       |  "uncrystallisedRights": 200000.00,
+       |  "nonUKRights": 800000.00,
+       |  "relevantAmount": 1200000.00,
+       |  "pensionDebits": [
+       |    {
+       |      "startDate": "2016-6-29",
+       |      "amount": 4000.00
+       |    },
+       |    {
+       |      "startDate": "2016-4-1",
+       |      "amount": 623000.00
+       |    }
+       |  ]
+       | }
+     """.stripMargin
+  ).as[JsObject]
 }
 
 class TransformSpec extends UnitSpec{

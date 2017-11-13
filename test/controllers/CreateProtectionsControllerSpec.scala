@@ -58,10 +58,13 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
   implicit val hc = HeaderCarrier()
   val mockNpsConnector = mock[NpsConnector]
 
-  val validApplicationBody = Json.toJson(ProtectionApplication(
-    protectionType = "FP2016"
-
-  ))
+  val validApplicationBody = Json.parse(
+    """
+      |{
+      |  "protectionType" : "FP2016"
+      |}
+    """.stripMargin
+  )
 
   val invalidApplicationBody = Json.parse(
     """
