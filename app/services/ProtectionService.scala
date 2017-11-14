@@ -16,16 +16,13 @@
 
 package services
 
+import _root_.util.{NinoHelper, Transformers}
 import connectors.NpsConnector
-import play.api.libs.json.{JsObject, JsResult}
-import play.api.http.Status
+import model.HttpResponseDetails
+import play.api.libs.json._
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
-import util.{NinoHelper, Transformers}
-import model.HttpResponseDetails
-import play.mvc.BodyParser.Json
-import play.api.libs.json.Json.prettyPrint
-import uk.gov.hmrc.http.HeaderCarrier
 
 object ProtectionService extends ProtectionService {
   override val nps: NpsConnector = NpsConnector
@@ -37,47 +34,44 @@ trait ProtectionService {
 
   def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
-    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
-      ninoWithoutSuffix,
-      None,
-      applicationRequestBody)
-    npsRequestBody.fold(
-      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
-      req => nps.applyForProtection(nino, req) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap {
-          Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
-        }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    val npsRequestBody = applicationRequestBody.deepMerge(Json.obj("nino" -> ninoWithoutSuffix))
+    nps.applyForProtection(nino, npsRequestBody) map { npsResponse =>
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
       }
-    )
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
 
-  def amendProtection(nino: String, protectionId: Long, amendmentRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
+  def amendProtection(nino: String,
+                      protectionId: Long,
+                      amendmentRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
-    val npsRequestBody: JsResult[JsObject] = Transformers.transformApplyOrAmendRequestBody(
-      ninoWithoutSuffix,
-      Some(protectionId),
-      amendmentRequestBody)
+    val npsRequestBody: JsObject = {
+      amendmentRequestBody.deepMerge(Json.obj(
+        "nino" -> ninoWithoutSuffix,
+        "protection" -> Json.obj("id" -> protectionId)
+      ))
+    }
 
-    npsRequestBody.fold(
-      errors => Future.successful(HttpResponseDetails(Status.BAD_REQUEST, npsRequestBody)),
-      req => nps.amendProtection(nino, protectionId, req) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap {
-          Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
-        }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    nps.amendProtection(nino, protectionId, npsRequestBody) map { npsResponse =>
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformApplyOrAmendResponseBody(lastNinoCharOpt.get, _)
       }
-    )
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (_, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
 
     nps.readExistingProtections(nino) map { npsResponse =>
-        val transformedResponseJs = npsResponse.body.flatMap { Transformers.transformReadResponseBody(lastNinoCharOpt.get, _) }
-        HttpResponseDetails(npsResponse.status, transformedResponseJs)
+      val transformedResponseJs = npsResponse.body.flatMap {
+        Transformers.transformReadResponseBody(lastNinoCharOpt.get, _)
       }
+      HttpResponseDetails(npsResponse.status, transformedResponseJs)
+    }
   }
 
 }

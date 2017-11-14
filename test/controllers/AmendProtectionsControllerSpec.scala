@@ -49,16 +49,20 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
   implicit val hc = HeaderCarrier()
   val mockNpsConnector = mock[NpsConnector]
 
-  val validAmendBody = Json.toJson(ProtectionAmendment(
-    protectionType = "IP2016",
-    status = "Open",
-    version = testProtectionVersion,
-    relevantAmount = 1250000.00,
-    postADayBenefitCrystallisationEvents = 250000.00,
-    preADayPensionInPayment = 250000.00,
-    nonUKRights = 250000.00,
-    uncrystallisedRights = 500000.00
-  ))
+  val validAmendBody = Json.parse(
+    s"""
+      |{
+      | "protectionType": "IP2016",
+      | "status": "Open",
+      | "version": $testProtectionVersion,
+      | "relevantAmount": 1250000.00,
+      | "postADayBenefitCrystallisationEvents": 250000.00,
+      | "preADayPensionInPayment": 250000.00,
+      | "nonUKRights": 250000.00,
+      | "uncrystallisedRights": 500000.00
+      |}
+    """.stripMargin
+  )
 
   val invalidAmendBody = Json.parse(
     """

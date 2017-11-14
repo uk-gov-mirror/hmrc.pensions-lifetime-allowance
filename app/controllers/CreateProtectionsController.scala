@@ -42,7 +42,7 @@ trait CreateProtectionsController extends NPSResponseHandler {
 
     protectionApplicationJs.fold(
       errors => Future.successful(BadRequest(Json.toJson(Error(message = "body failed validation with errors: " + errors)))),
-      p => protectionService.applyForProtection(nino, request.body.as[JsObject]).map { response =>
+      p => protectionService.applyForProtection(nino, Json.toJson(p).as[JsObject]).map { response =>
         handleNPSSuccess(response)
       }.recover {
         case downstreamError => handleNPSError(downstreamError, "[AmendProtectionsController.amendProtection]")

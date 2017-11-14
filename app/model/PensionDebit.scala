@@ -16,10 +16,19 @@
 
 package model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
 
 case class PensionDebit(startDate: String, amount: Double)
 
 object PensionDebit {
-  implicit val pdFormat = Json.format[PensionDebit]
+  val jsonWrites: Writes[PensionDebit] = new Writes[PensionDebit] {
+    override def writes(o: PensionDebit): JsValue = Json.obj(
+      "pensionDebitStartDate" -> o.startDate,
+      "pensionDebitEnteredAmount" -> o.amount
+    )
+  }
+
+  val jsonReads: Reads[PensionDebit] = Json.reads
+
+  implicit val pdFormat = Format[PensionDebit](jsonReads, jsonWrites)
 }
