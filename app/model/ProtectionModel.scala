@@ -56,7 +56,7 @@ object ProtectionModel {
           (JsPath \ "protection" \ "id").readNullable[Long] and
           (JsPath \ "protection").read(Transformers.dateReads) and
           (JsPath \ "protection" \ "version").readNullable[Int] and
-          (JsPath \ "protection" \ "type").readNullable[Int].map(_.map(Transformers.intToType).get) and
+          (JsPath \ "protection" \ "type").read[Int].map(Transformers.intToType) and
           (JsPath \ "protection" \ "status").readNullable[Int].map(_.map(Transformers.intToStatus)) and
           (JsPath \ "protection" \ "protectedAmount").readNullable[Double] and
           (JsPath \ "protection" \ "relevantAmount").readNullable[Double] and
