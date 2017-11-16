@@ -16,7 +16,7 @@
 
 package controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock.{equalToJson, putRequestedFor,postRequestedFor, urlEqualTo, verify}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
@@ -82,29 +82,29 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       """.stripMargin
 
   def validResultIPBody(nino: String, protectionType: String): String = {
-    Json.parse(s"""
-                  |{
-                  |	"nino":"$nino",
-                  |	"pensionSchemeAdministratorCheckReference":"PSA12345645A",
-                  |	"psaCheckReference":"PSA12345645A",
-                  |	"pensionDebitAmount":0,
-                  |	"uncrystallisedRights":500000,
-                  |	"protectionType":"$protectionType",
-                  |	"protectedAmount":700,
-                  |	"protectionID":1,
-                  |	"pensionDebitEnteredAmount":6000,
-                  |	"notificationId":5,
-                  |	"protectionReference":"IP141234567890C",
-                  |	"postADayBenefitCrystallisationEvents":250000,
-                  |	"nonUKRights":250000,
-                  |	"pensionDebitStartDate":"2015-05-25",
-                  |	"version":1,
-                  |	"pensionDebitTotalAmount":14000,
-                  |	"relevantAmount":1250000,
-                  |	"status":"Open",
-                  |	"preADayPensionInPayment":250000,
-                  |	"certificateDate":"2015-05-22T12:22:59"
-                  |}
+    Json.parse(
+      s"""
+         |{
+         |	"nino":"$nino",
+         |	"psaCheckReference":"PSA12345645A",
+         | 	"protectionID":1,
+         |	"certificateDate":"2015-05-22T12:22:59",
+         | 	"version":1,
+         |  "protectionType":"$protectionType",
+         |	"status":"Open",
+         |	"protectedAmount":700,
+         |	"relevantAmount":1250000,
+         |	"postADayBenefitCrystallisationEvents":250000,
+         |	"preADayPensionInPayment":250000,
+         |	"uncrystallisedRights":500000,
+         |	"nonUKRights":250000,
+         | 	"pensionDebitAmount":0,
+         |	"pensionDebitEnteredAmount":6000,
+         |	"pensionDebitStartDate":"2015-05-25",
+         |	"pensionDebitTotalAmount":14000,
+         |	"notificationId":5,
+         |	"protectionReference":"IP141234567890C"
+         |}
     """.stripMargin).toString()
   }
 
@@ -132,7 +132,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
        |}
     """.stripMargin).toString()
 
-  def sucessfulAuditResult(nino: String, ninoWithoutSuffix: String, protectionId : Long, protectionType: Int): String = Json.parse(
+  def sucessfulAuditResult(nino: String, ninoWithoutSuffix: String, protectionId: Long, protectionType: Int): String = Json.parse(
     s"""
        |{
        |  "auditSource" : "pensions-lifetime-allowance",
@@ -201,7 +201,6 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
   }
 
 
-
   "AmendProtectionsController" when {
 
     "amending an IP2016 application" should {
@@ -218,7 +217,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -265,7 +264,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -313,7 +312,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -361,7 +360,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -410,7 +409,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -459,7 +458,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2016")).futureValue
 
@@ -505,7 +504,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 
@@ -552,7 +551,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 
@@ -600,7 +599,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 
@@ -648,7 +647,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 
@@ -697,7 +696,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 
@@ -746,7 +745,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def client(path: String): WSRequest = ws.url(s"http://localhost:$port/protect-your-lifetime-allowance/$path")
         .withFollowRedirects(false)
-        .withHeaders(("X-Session-ID","session-12345"))
+        .withHeaders(("X-Session-ID", "session-12345"))
 
       def result: WSResponse = client(s"individuals/$nino/protections/$id").put(validAmendIPBody(ninoWithoutSuffix, "IP2014")).futureValue
 

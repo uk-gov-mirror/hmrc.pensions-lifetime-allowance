@@ -92,24 +92,25 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
   def validResultIPBody(nino: String): String = {
     Json.parse(s"""
                   |{
-                  |"nino":"$nino",
-                  |"pensionSchemeAdministratorCheckReference":"PSA12345678A",
-                  |"psaCheckReference":"PSA12345678A",
-                  |"pensionDebitAmount":0,
-                  |"uncrystallisedRights":500000,
-                  |"protectionType":"IP2016",
-                  |"protectedAmount":600000,
-                  |"protectionID":1,
-                  |"pensionDebitEnteredAmount":300,
-                  |"notificationId":5,
-                  |"protectionReference":"IP141234567890C",
-                  |"postADayBenefitCrystallisationEvents":250000,
-                  |"nonUKRights":250000,
-                  |"pensionDebitStartDate":"2015-01-29",
-                  |"version":1,"pensionDebitTotalAmount":800,
-                  |"relevantAmount":1250000,"status":"Open",
-                  |"preADayPensionInPayment":250000,
-                  |"certificateDate":"2015-05-22T12:22:59"
+                  | "nino":"$nino",
+                  |	"psaCheckReference":"PSA12345678A",
+                  |	"protectionID":1,
+                  |	"certificateDate":"2015-05-22T12:22:59",
+                  |	"version":1,
+                  | "protectionType":"IP2016",
+                  |	"status":"Open",
+                  |	"protectedAmount":600000,
+                  |	"relevantAmount":1250000,
+                  |	"postADayBenefitCrystallisationEvents":250000,
+                  |	"preADayPensionInPayment":250000,
+                  |	"uncrystallisedRights":500000,
+                  |	"nonUKRights":250000,
+                  |	"pensionDebitAmount":0,
+                  |	"pensionDebitEnteredAmount":300,
+                  |	"pensionDebitStartDate":"2015-01-29",
+                  |	"pensionDebitTotalAmount":800,
+                  |	"notificationId":5,
+                  |	"protectionReference":"IP141234567890C"
                   |}
     """.stripMargin).toString()
   }
@@ -194,23 +195,24 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
     Json.parse(s"""
                   |{
                   |"nino":"$nino",
-                  |"pensionSchemeAdministratorCheckReference":"PSA12345678A",
                   |"psaCheckReference":"PSA12345678A",
-                  |"pensionDebitAmount":0,
-                  |"uncrystallisedRights":500000,
-                  |"protectionType":"FP2016",
-                  |"protectedAmount":600000,
-                  |"protectionID":1,
-                  |"pensionDebitEnteredAmount":300,
-                  |"notificationId":5,
-                  |"protectionReference":"FP141234567890C",
-                  |"postADayBenefitCrystallisationEvents":250000,
-                  |"nonUKRights":250000,
-                  |"pensionDebitStartDate":"2015-01-29",
-                  |"version":1,"pensionDebitTotalAmount":800,
-                  |"relevantAmount":1250000,"status":"Open",
-                  |"preADayPensionInPayment":250000,
-                  |"certificateDate":"2015-05-22T12:22:59"
+                  |	"protectionID":1,
+                  |	"certificateDate":"2015-05-22T12:22:59",
+                  |	"version":1,
+                  | "protectionType":"FP2016",
+                  |	"status":"Open",
+                  |	"protectedAmount":600000,
+                  |	"relevantAmount":1250000,
+                  |	"postADayBenefitCrystallisationEvents":250000,
+                  |	"preADayPensionInPayment":250000,
+                  |	"uncrystallisedRights":500000,
+                  |	"nonUKRights":250000,
+                  |	"pensionDebitAmount":0,
+                  |	"pensionDebitEnteredAmount":300,
+                  |	"pensionDebitStartDate":"2015-01-29",
+                  |	"pensionDebitTotalAmount":800,
+                  |	"notificationId":5,
+                  |	"protectionReference":"FP141234567890C"
                   |}
     """.stripMargin).toString()
   }

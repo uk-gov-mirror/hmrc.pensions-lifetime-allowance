@@ -23,6 +23,7 @@ import play.api.mvc.Action
 import play.mvc.Http.Response
 import services.ProtectionService
 import model.HttpResponseDetails
+import play.api.Logger
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -82,6 +83,7 @@ trait ReadProtectionsController extends BaseController {
     } else {
       ""
     }
+
     val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseBodyDetails))
     response.status match {
       case OK => InternalServerError(error)
