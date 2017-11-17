@@ -82,6 +82,8 @@ trait ReadProtectionsController extends BaseController {
     } else {
       ""
     }
+
+
     val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseBodyDetails))
     response.status match {
       case OK => InternalServerError(error)
