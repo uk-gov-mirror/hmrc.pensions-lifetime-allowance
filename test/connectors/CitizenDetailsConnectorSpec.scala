@@ -28,8 +28,8 @@ import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse }
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http._
 
 
 class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFakeApplication with BeforeAndAfter {
@@ -81,6 +81,17 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
       when(mockHttp.GET[HttpResponse](Matchers.any())
        (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(200)))
+
+      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+
+      val res = await(f)
+      res shouldBe CitizenRecordOK
+    }
+
+    "return a valid HTTPResponse for successful retrieval with limited Matchers.any()" in {
+
+      when(mockHttp.GET[HttpResponse](Matchers.eq(s"http://localhost:80/citizen-details/${testNino}/designatory-details"))
+        (Matchers.any[HttpReads[HttpResponse]], Matchers.any[HeaderCarrier], Matchers.any[ExecutionContext])).thenReturn(Future.successful(HttpResponse(200)))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
