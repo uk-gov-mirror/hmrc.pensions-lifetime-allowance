@@ -46,6 +46,7 @@ private object AppDependencies {
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.10.2"
   private val scalatestPlusPlayVersion = "2.0.0"
+  private val authClientVersion = "2.4.0"
 
   val compile = Seq(
 
@@ -85,7 +86,8 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "com.github.tomakehurst" % "wiremock" % "2.5.0" % scope
+        "com.github.tomakehurst" % "wiremock" % "2.5.0" % scope,
+        "uk.gov.hmrc" %% "auth-client" % authClientVersion
       )
     }.test
   }

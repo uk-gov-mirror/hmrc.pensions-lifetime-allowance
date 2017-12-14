@@ -18,13 +18,9 @@ package controllers
 
 import model.ProtectionAmendment
 import play.api.mvc._
-import play.api.http.Status
 import services.ProtectionService
-import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
 import model.Error
-import play.api.Logger
-
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
