@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,27 @@
 
 package controllers
 
+import auth.{AuthClientConnector, AuthorisedActions}
+import connectors.CitizenDetailsConnector
 import model.Error
 import play.api.mvc._
 import play.api.libs.json._
 import play.api.mvc.Action
-import play.mvc.Http.Response
 import services.ProtectionService
 import model.HttpResponseDetails
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 object ReadProtectionsController extends ReadProtectionsController {
   override val protectionService = ProtectionService
-  override def WithCitizenRecordCheck(nino: String) = ProtectionsActions.WithCitizenRecordCheckAction(nino)
+  override val authConnector = AuthClientConnector
+  override val citizenDetailsConnector = CitizenDetailsConnector
 }
 
-trait ReadProtectionsController extends BaseController {
+trait ReadProtectionsController extends BaseController with AuthorisedActions {
 
   def protectionService: ProtectionService
-
-  def WithCitizenRecordCheck(nino: String): ActionBuilder[Request]
 
   /**
     * Return the full details of current versions of all protections held by the individual
@@ -45,7 +44,7 @@ trait ReadProtectionsController extends BaseController {
     * @param nino national insurance number of the individual
     * @return json object full details of the existing protections held fby the individual
     */
-  def readExistingProtections(nino: String) : Action[AnyContent] = WithCitizenRecordCheck(nino).async { implicit request =>
+  def readExistingProtections(nino: String) : Action[AnyContent] = Authorised(nino).async { implicit request =>
     protectionService.readExistingProtections(nino) map { response =>
       response.status match {
         case OK if response.body.isSuccess => Ok(response.body.get)

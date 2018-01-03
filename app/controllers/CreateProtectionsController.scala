@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,28 @@
 
 package controllers
 
+import auth.{AuthClientConnector, AuthorisedActions}
+import connectors.CitizenDetailsConnector
 import model.ProtectionApplication
 import play.api.mvc._
-import play.api.http.Status
 import services.ProtectionService
-import uk.gov.hmrc.play.microservice.controller.BaseController
 import play.api.libs.json._
 import model.Error
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object CreateProtectionsController extends CreateProtectionsController {
   override val protectionService = ProtectionService
-  override def WithCitizenRecordCheck(nino: String)= ProtectionsActions.WithCitizenRecordCheckAction(nino)
+  override val authConnector = AuthClientConnector
+  override val citizenDetailsConnector = CitizenDetailsConnector
 }
 
-trait CreateProtectionsController extends NPSResponseHandler {
+trait CreateProtectionsController extends NPSResponseHandler with AuthorisedActions {
 
   def protectionService: ProtectionService
-  def WithCitizenRecordCheck(nino:String): ActionBuilder[Request]
 
-  def applyForProtection(nino: String): Action[JsValue] = WithCitizenRecordCheck(nino).async(BodyParsers.parse.json) { implicit request =>
+  def applyForProtection(nino: String): Action[JsValue] = Authorised(nino).async(BodyParsers.parse.json) { implicit request =>
     val protectionApplicationJs = request.body.validate[ProtectionApplication]
 
     protectionApplicationJs.fold(
