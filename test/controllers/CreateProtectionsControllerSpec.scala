@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,23 +34,28 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import model.ProtectionApplication
 import uk.gov.hmrc.domain.Generator
-import connectors.NpsConnector
+import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
+import _root_.mock.AuthMock
 import services.ProtectionService
 import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.{ BadRequestException, HeaderCarrier }
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
-class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter {
+class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with AuthMock {
 
   private implicit val system: ActorSystem = ActorSystem("test-sys")
   private implicit val mat: ActorMaterializer = ActorMaterializer()
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
-
+  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
+  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+    .thenReturn(Future.successful(CitizenRecordOK))
+
+  mockAuthConnector(Future.successful({}))
 
   val testNino = randomNino
   val (testNinoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(testNino)
@@ -123,14 +128,15 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
 
   object testCreateController extends CreateProtectionsController {
     override val protectionService = testProtectionService
-
-    override def WithCitizenRecordCheck(nino: String) = AlwaysExecuteAction(nino)
+    override lazy val authConnector = mockAuthConnector
+    override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
   }
 
   "CreateProtectionController" should {
     "respond to a valid Create Protection request with OK" in {
       when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
+
 
       val fakeRequest: FakeRequest[JsValue] = FakeRequest(
         method = "POST",

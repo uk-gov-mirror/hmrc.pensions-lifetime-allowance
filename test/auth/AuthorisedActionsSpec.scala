@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +14,50 @@
  * limitations under the License.
  */
 
-package controllers
+package auth
 
 import java.util.Random
 
+import akka.actor.ActorSystem
 import akka.stream.Materializer
 import connectors._
+import controllers.ProtectionsActions
 import org.mockito.Matchers
 import org.mockito.Mockito._
+import _root_.mock.AuthMock
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneServerPerSuite
+import play.api.http.Status._
 import play.api.mvc.Results._
 import play.api.mvc._
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
-class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with OneServerPerSuite {
-
+class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with OneServerPerSuite with AuthMock {
   val ninoGenerator = new Generator(new Random())
   val testNino = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
+  lazy val fakeRequest = FakeRequest()
 
   implicit val hc = HeaderCarrier()
   implicit lazy val materializer: Materializer = app.materializer
-
+  val mockPlayAuthConnector = mock[PlayAuthConnector]
+  implicit val system = ActorSystem()
   val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
 
-  object testProtectionsActions extends ProtectionsActions {
+  object testProtectionsActions extends ProtectionsActions with AuthorisedActions with AuthMock  {
+
+    override lazy val authConnector: AuthClientConnectorTrait = mockAuthConnector
     override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
   }
 
   def testCitizenRecordCheck(nino: String): testProtectionsActions.WithCitizenRecordCheckAction = testProtectionsActions.WithCitizenRecordCheckAction(nino)
+  def testAuth(nino: String): testProtectionsActions.Authorised = testProtectionsActions.Authorised(nino)
 
   "test Citizen Record search found" in {
     when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
@@ -128,4 +137,26 @@ class ProtectionsActionsSpec extends UnitSpec with MockitoSugar with OneServerPe
     bodyOf(resultStatus) shouldBe bodyOf(expectedResult)
     resultStatus.header.status shouldBe expectedResult.header.status
   }
+
+    "get Unauthorized response for Auth" in {
+      when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
+
+      val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(Unauthorized))
+      status(result) shouldBe UNAUTHORIZED
+    }
+
+  "get Forbidden response for Auth" in {
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
+
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(Forbidden))
+    status(result) shouldBe FORBIDDEN
+  }
+
+  "get Internal Server Error response for Auth" in {
+    when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any())).thenReturn(Future.successful(CitizenRecordOK))
+
+    val result = testCitizenRecordCheck(testNino).invokeBlock(FakeRequest(), (r: Request[Any]) => Future.successful(InternalServerError))
+    status(result) shouldBe INTERNAL_SERVER_ERROR
+  }
+
 }
