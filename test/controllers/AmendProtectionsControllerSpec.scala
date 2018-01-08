@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package controllers
 
 import java.util.Random
 
-import connectors.NpsConnector
+import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import model.{ProtectionAmendment, ProtectionApplication}
 import org.mockito.Matchers
 import org.mockito.Mockito._
+import _root_.mock.AuthMock
+import auth.AuthClientConnectorTrait
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
@@ -33,12 +35,18 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, Upstream5xxResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream5xxResponse}
 
-class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
+class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
+  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
+
+  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+    .thenReturn(Future.successful(CitizenRecordOK))
+
+  mockAuthConnector(Future.successful({}))
 
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
@@ -121,7 +129,8 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
 
   object testAmendController extends AmendProtectionsController {
     override val protectionService = testProtectionService
-    override def WithCitizenRecordCheck(nino:String) = AlwaysExecuteAction(nino)
+    override lazy val authConnector: AuthClientConnectorTrait = mockAuthConnector
+    override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
   }
 
   "AmendProtectionController" should {
@@ -133,7 +142,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
         headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = invalidAmendBody)
 
-      val result = testAmendController.amendProtection(testNino, testProtectionId.toString).apply(fakeRequest)
+      val result = testAmendController.amendProtection(testNino, testProtectionId.toString)(fakeRequest)
       status(result) must be(BAD_REQUEST)
     }
   }

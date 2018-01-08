@@ -16,20 +16,21 @@
 
 package controllers
 
-import auth.{AuthClientConnector, AuthorisedActions}
+import auth.{AuthClientConnector, AuthClientConnectorTrait, AuthorisedActions}
 import connectors.CitizenDetailsConnector
 import model.ProtectionAmendment
 import play.api.mvc._
 import services.ProtectionService
 import play.api.libs.json._
 import model.Error
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
 object AmendProtectionsController extends AmendProtectionsController {
   override val protectionService = ProtectionService
-  override val authConnector = AuthClientConnector
+  override val authConnector: AuthClientConnectorTrait = AuthClientConnector
   override val citizenDetailsConnector = CitizenDetailsConnector
 }
 
