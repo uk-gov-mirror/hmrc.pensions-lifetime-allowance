@@ -171,6 +171,26 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
     }
   }
 
+  "ReadProtectionsController" should {
+    "handle a 503 (SERVICE_UNAVAILABLE) response from NPS service to a read protections request by passing it back to the caller" in {
+      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(model.HttpResponseDetails(503, JsSuccess(successfulReadResponseBody))))
+
+      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
+      status(result) must be(SERVICE_UNAVAILABLE)
+    }
+  }
+
+  "ReadProtectionsController" should {
+    "handle a NOT FOUND response from NPS service" in {
+      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(model.HttpResponseDetails(404, JsSuccess(successfulReadResponseBody))))
+
+      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
+      status(result) must be(NOT_FOUND)
+    }
+  }
+
   "ReadProtectionsController read protections request" should {
     "handle a 401 (UNAUTHORIZED) response from NPS service to a read protections request by passing it back to the caller" in {
       when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))

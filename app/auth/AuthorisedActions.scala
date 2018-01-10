@@ -27,17 +27,19 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 trait AuthorisedActions extends AuthProvider with MicroserviceAuthorisedFunctionTrait with Controller {
-  def logErrorAndRespond(err: String, status: Status): Future[Result] = {
-    Logger.warn(err)
-    Future.successful(status(err))
-  }
 
-  def logErrorAndRespondFromUpstreamResponse(err: String, status: Status, upstreamResponse: String): Future[Result] = {
-    Logger.warn(upstreamResponse)
-    Future.successful(status(s"$err\nResponse: $upstreamResponse"))
-  }
   val citizenDetailsConnector: CitizenDetailsConnector
   case class Authorised(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
+
+    def logErrorAndRespond(err: String, status: Status): Future[Result] = {
+      Logger.warn(err)
+      Future.successful(status(err))
+    }
+
+    def logErrorAndRespondFromUpstreamResponse(err: String, status: Status, upstreamResponse: String): Future[Result] = {
+      Logger.warn(upstreamResponse)
+      Future.successful(status(s"$err\nResponse: $upstreamResponse"))
+    }
 
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)

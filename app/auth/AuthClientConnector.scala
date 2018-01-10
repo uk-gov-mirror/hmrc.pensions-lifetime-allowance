@@ -21,10 +21,10 @@ import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.http.CorePost
 import uk.gov.hmrc.play.config.ServicesConfig
 
-
+// $COVERAGE-OFF$
   object AuthClientConnector extends AuthClientConnectorTrait {
     override val serviceUrl: String = baseUrl("auth")
     override def http: CorePost = WSHttp
   }
-
+// $COVERAGE-ON$
   trait AuthClientConnectorTrait extends PlayAuthConnector with ServicesConfig
