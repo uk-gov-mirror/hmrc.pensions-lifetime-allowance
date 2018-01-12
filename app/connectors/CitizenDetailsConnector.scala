@@ -16,13 +16,9 @@
 
 package connectors
 
-import util.NinoHelper
 import config.WSHttp
 import play.api.http.Status._
-import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http._
-
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse }
 
@@ -48,7 +44,7 @@ trait CitizenDetailsConnector {
   val checkRequired: Boolean
   
   def getCitizenRecordCheckUrl(nino: String): String = {
-    serviceUrl + s"/citizen-details/${nino}/designatory-details"
+    serviceUrl + s"/citizen-details/$nino/designatory-details"
   }
 
   def checkCitizenRecord(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CitizenRecordCheckResult] = {

@@ -37,7 +37,3 @@ object MicroserviceAuditConnector extends AuditConnector with RunMode {
   override lazy val auditingConfig = LoadAuditingConfig(s"auditing")
 }
 
-//object AuthClientConnector extends PlayAuthConnector with ServicesConfig {
-//  override val serviceUrl: String = baseUrl("auth")
-//  override def http: CorePost = WSHttp
-//}

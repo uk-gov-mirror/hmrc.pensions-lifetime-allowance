@@ -21,19 +21,12 @@ import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-
 import scala.concurrent.Future
 
 trait AuthMock extends MockitoSugar{
   this: MockitoSugar =>
 
   val mockAuthConnector = mock[AuthClientConnectorTrait]
-
-  def mockAuthRetrieval[A](retrieval: Retrieval[A], returnValue: A): OngoingStubbing[Future[A]] = {
-    when(mockAuthConnector.authorise[A](Matchers.any(), Matchers.eq(retrieval))(Matchers.any(), Matchers.any()))
-      .thenReturn(Future.successful(returnValue))
-  }
 
   def mockAuthConnector[T](future: Future[T]): OngoingStubbing[Future[T]] = {
     when(mockAuthConnector.authorise[T](Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))

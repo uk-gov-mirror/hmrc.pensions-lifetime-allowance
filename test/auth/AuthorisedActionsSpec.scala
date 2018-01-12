@@ -17,7 +17,6 @@
 package auth
 
 import java.util.Random
-
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import connectors._
@@ -30,10 +29,9 @@ import play.api.http.Status._
 import play.api.mvc.Results._
 import play.api.mvc._
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.{AuthorisationException, InsufficientConfidenceLevel, MissingBearerToken}
+import uk.gov.hmrc.auth.core.{InsufficientConfidenceLevel, MissingBearerToken}
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.play.test.UnitSpec
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}

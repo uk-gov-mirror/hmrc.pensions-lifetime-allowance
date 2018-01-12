@@ -33,8 +33,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import util.NinoHelper
 import play.api.libs.json.JsNumber
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
 
 class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {

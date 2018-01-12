@@ -19,7 +19,6 @@ package controllers
 import java.util.Random
 
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
-import model.{ProtectionAmendment, ProtectionApplication}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import _root_.mock.AuthMock
@@ -27,13 +26,12 @@ import auth.AuthClientConnectorTrait
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.Result
 import util.NinoHelper
 import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
-
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream5xxResponse}
 
@@ -118,13 +116,6 @@ class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite wi
 
   object testProtectionService extends services.ProtectionService {
     override val nps = mockNpsConnector
-  }
-
-  case class AlwaysExecuteAction(nino: String) extends ActionBuilder[Request] {
-
-    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
-      block(request)
-    }
   }
 
   object testAmendController extends AmendProtectionsController {

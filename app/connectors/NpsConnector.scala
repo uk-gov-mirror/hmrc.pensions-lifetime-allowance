@@ -34,11 +34,8 @@ import uk.gov.hmrc.http.logging.Authorization
 object NpsConnector extends NpsConnector with ServicesConfig {
 
   override val serviceUrl = baseUrl("nps")
-
   override def http = WSHttp
-
   override val audit = MicroserviceAuditConnector
-
   override val serviceAccessToken = getConfString("nps.accessToken", "")
   override val serviceEnvironment = getConfString("nps.environment", "")
 
@@ -49,17 +46,13 @@ trait NpsConnector {
   def http: HttpGet with HttpPost with HttpPut
 
   val serviceUrl: String
-
   val serviceAccessToken: String
   val serviceEnvironment: String
-
   val audit: AuditConnector
 
-  // add addtional headers for the NPS request
   def addExtraHeaders(implicit hc: HeaderCarrier): HeaderCarrier = hc.withExtraHeaders(
     "Accept" -> "application/vnd.hmrc.1.0+json",
     "Content-Type" -> "application/json",
-    //"Authorization" -> s"Bearer $serviceAccessToken",
     "Environment" -> serviceEnvironment).copy(authorization = Some(Authorization(s"Bearer $serviceAccessToken")))
 
   def getApplyUrl(nino: String): String = {

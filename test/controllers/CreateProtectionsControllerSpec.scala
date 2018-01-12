@@ -17,30 +17,22 @@
 package controllers
 
 import java.util.Random
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.NinoHelper
-import play.api.http.Status
 import play.api.libs.json._
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers._
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import model.ProtectionApplication
+import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.domain.Generator
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import _root_.mock.AuthMock
-import services.ProtectionService
 import play.api.test.Helpers._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
 class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with AuthMock {

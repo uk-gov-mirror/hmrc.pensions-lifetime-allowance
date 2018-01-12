@@ -42,12 +42,6 @@ object MicroserviceLoggingFilter extends LoggingFilter with MicroserviceFilterSu
   override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
 }
 
-//object MicroserviceAuthFilter extends AuthorisedFunctions with MicroserviceFilterSupport {
-//
-//  override lazy val authConnector : AuthConnector = AuthClientConnector
-//
-//}
-
 object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode {
   override val auditConnector = MicroserviceAuditConnector
 

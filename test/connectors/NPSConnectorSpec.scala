@@ -21,13 +21,11 @@ import java.util.Random
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc
 import config.WSHttp
 import uk.gov.hmrc.domain.Generator
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.time.DateTimeUtils
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
