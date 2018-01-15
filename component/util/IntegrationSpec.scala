@@ -53,38 +53,13 @@ trait IntegrationSpec extends UnitSpec
   }
 
   def mockAuth(status: Int, nino: String): Unit = {
-    stubGet("/auth/authority", status,
-      s"""
-         |{
-         |"uri":"/auth/oid/1234567890",
-         |"loggedInAt": "2014-06-09T14:57:09.522Z",
-         |"previouslyLoggedInAt": "2014-06-09T14:48:24.841Z",
-         |"credentials":{"gatewayId":"xxx2"},
-         |"accounts":{},
-         |"levelOfAssurance": "2",
-         |"confidenceLevel" : 200,
-         |"credentialStrength": "strong",
-         |"legacyOid":"1234567890",
-         |"userDetailsLink":"http://localhost:11111/auth/userDetails",
-         |"ids":"/auth/ids"
-         |}""".stripMargin
-    )
 
-    stubGet(s"/authorise/write/paye/$nino\\?confidenceLevel=200", status,
+    stubPost("/auth/authorise", status,
       s"""
          |{
-         |"uri":"/auth/oid/1234567890",
-         |"loggedInAt": "2014-06-09T14:57:09.522Z",
-         |"previouslyLoggedInAt": "2014-06-09T14:48:24.841Z",
-         |"credentials":{"gatewayId":"xxx2"},
-         |"accounts":{},
-         |"levelOfAssurance": "2",
-         |"confidenceLevel" : 200,
-         |"credentialStrength": "strong",
-         |"legacyOid":"1234567890",
-         |"userDetailsLink":"http://localhost:11111/auth/userDetails",
-         |"ids":"/auth/ids"
-         |}""".stripMargin
+         |"status": "ok"
+         |}
+       """.stripMargin
     )
 
     stubGet("/auth/ids", status, """{"internalId":"Int-xxx","externalId":"Ext-xxx"}""")
