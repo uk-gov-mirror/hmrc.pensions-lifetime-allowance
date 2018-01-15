@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package model
+package auth
 
-import play.api.libs.json.Json
+import uk.gov.hmrc.auth.core.AuthorisedFunctions
 
-case class Error(message: String)
-
-object Error {
-  implicit val errorFormat = Json.format[Error]
-}
+  trait MicroserviceAuthorisedFunctionTrait extends AuthorisedFunctions {
+    override def authConnector : AuthClientConnectorTrait
+  }

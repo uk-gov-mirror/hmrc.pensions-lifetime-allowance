@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package model
+package auth
 
-import play.api.libs.json.Json
+import config.WSHttp
+import uk.gov.hmrc.auth.core.PlayAuthConnector
+import uk.gov.hmrc.http.CorePost
+import uk.gov.hmrc.play.config.ServicesConfig
 
-case class Error(message: String)
-
-object Error {
-  implicit val errorFormat = Json.format[Error]
-}
+// $COVERAGE-OFF$
+  object AuthClientConnector extends AuthClientConnectorTrait {
+    override val serviceUrl: String = baseUrl("auth")
+    override def http: CorePost = WSHttp
+  }
+// $COVERAGE-ON$
+  trait AuthClientConnectorTrait extends PlayAuthConnector with ServicesConfig

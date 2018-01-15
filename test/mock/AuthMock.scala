@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package model
+package mock
 
-import play.api.libs.json.Json
+import auth.AuthClientConnectorTrait
+import org.mockito.Matchers
+import org.mockito.Mockito._
+import org.mockito.stubbing.OngoingStubbing
+import org.scalatest.mockito.MockitoSugar
+import scala.concurrent.Future
 
-case class Error(message: String)
+trait AuthMock extends MockitoSugar{
+  this: MockitoSugar =>
 
-object Error {
-  implicit val errorFormat = Json.format[Error]
+  val mockAuthConnector = mock[AuthClientConnectorTrait]
+
+  def mockAuthConnector[T](future: Future[T]): OngoingStubbing[Future[T]] = {
+    when(mockAuthConnector.authorise[T](Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+      .thenReturn(future)
+  }
 }

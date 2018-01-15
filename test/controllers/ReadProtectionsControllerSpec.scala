@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ package controllers
 import java.util.Random
 
 import akka.stream.Materializer
-import connectors.NpsConnector
+import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import org.mockito.Matchers
 import org.mockito.Mockito._
+import _root_.mock.AuthMock
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
@@ -32,19 +33,23 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import util.NinoHelper
 import play.api.libs.json.JsNumber
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import uk.gov.hmrc.http.HeaderCarrier
 
-class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter {
+class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
   implicit lazy val materializer: Materializer = app.materializer
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
-
+  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
   val testNino = randomNino
   val (testNinoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(testNino)
+
+  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+    .thenReturn(Future.successful(CitizenRecordOK))
+
+  mockAuthConnector(Future.successful({}))
 
   implicit val hc = HeaderCarrier()
   val mockNpsConnector = mock[NpsConnector]
@@ -131,7 +136,8 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
 
   object testCreateController extends ReadProtectionsController {
     override val protectionService = testProtectionService
-    override def WithCitizenRecordCheck(nino:String) = AlwaysExecuteAction(nino)
+    override lazy val authConnector = mockAuthConnector
+    override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
   }
 
   "ReadProtectionsController" should {
@@ -161,6 +167,26 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
 
       val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
       status(result) must be(INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  "ReadProtectionsController" should {
+    "handle a 503 (SERVICE_UNAVAILABLE) response from NPS service to a read protections request by passing it back to the caller" in {
+      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(model.HttpResponseDetails(503, JsSuccess(successfulReadResponseBody))))
+
+      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
+      status(result) must be(SERVICE_UNAVAILABLE)
+    }
+  }
+
+  "ReadProtectionsController" should {
+    "handle a NOT FOUND response from NPS service" in {
+      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(model.HttpResponseDetails(404, JsSuccess(successfulReadResponseBody))))
+
+      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
+      status(result) must be(NOT_FOUND)
     }
   }
 
