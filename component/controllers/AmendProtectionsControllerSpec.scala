@@ -210,8 +210,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, OK, validResponseIPBody(ninoWithoutSuffix, 3), id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -256,8 +256,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, SERVICE_UNAVAILABLE, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -304,8 +304,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, BAD_GATEWAY, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -352,8 +352,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, UNAUTHORIZED, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -401,8 +401,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, FORBIDDEN, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -450,8 +450,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, BAD_REQUEST, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -497,8 +497,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, OK, validResponseIPBody(ninoWithoutSuffix, 2), id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -543,8 +543,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, SERVICE_UNAVAILABLE, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -591,8 +591,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, BAD_GATEWAY, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -639,8 +639,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, UNAUTHORIZED, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -688,8 +688,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, FORBIDDEN, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }
@@ -737,8 +737,8 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockAmend(ninoWithoutSuffix, BAD_REQUEST, "error message", id)
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
 
       }

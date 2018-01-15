@@ -52,15 +52,10 @@ trait IntegrationSpec extends UnitSpec
     super.afterAll()
   }
 
-  def mockAuth(status: Int, nino: String): Unit = {
+  def mockAuth(status: Int): Unit = {
 
-    stubPost("/auth/authorise", status,
-      s"""
-         |{
-         |"status": "ok"
-         |}
-       """.stripMargin
-    )
+    stubPost("/auth/authorise", status, "{}")
+
 
     stubGet("/auth/ids", status, """{"internalId":"Int-xxx","externalId":"Ext-xxx"}""")
 

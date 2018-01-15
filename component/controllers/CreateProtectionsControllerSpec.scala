@@ -284,8 +284,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, OK, validResponseIPBody(ninoWithoutSuffix))
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -329,8 +329,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, CONFLICT, validResponseIPBody(ninoWithoutSuffix))
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -374,8 +374,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, SERVICE_UNAVAILABLE, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -420,8 +420,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, BAD_GATEWAY, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -465,8 +465,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, UNAUTHORIZED, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -510,8 +510,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, FORBIDDEN, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -555,8 +555,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, BAD_REQUEST, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -599,8 +599,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, OK, validResponseFPBody(ninoWithoutSuffix))
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -644,8 +644,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, CONFLICT, validResponseFPBody(ninoWithoutSuffix))
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -689,8 +689,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, SERVICE_UNAVAILABLE, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -734,8 +734,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, BAD_GATEWAY, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -779,8 +779,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, UNAUTHORIZED, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -824,8 +824,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, FORBIDDEN, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
@@ -869,8 +869,8 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
       def testMocks(): Unit = {
         mockNPSConnector(ninoWithoutSuffix, BAD_REQUEST, "error message")
-        mockAuth(OK, nino)
-        mockAudit(OK)
+        mockAuth(OK)
+        mockAudit(NO_CONTENT)
         mockCitizenDetails(nino, OK)
       }
 
