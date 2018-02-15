@@ -150,10 +150,10 @@ class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with OneServerPer
     status(result) shouldBe FORBIDDEN
   }
 
-  "get Internal Server Error response for Auth" in {
+  "allow unexpected error to pass through" in {
     val action = setupActions(Future.failed(new Exception), Future.successful(Future.successful(CitizenRecordOK)))
     val result: Future[Result] = action.Authorised(testNino).invokeBlock(fakeRequest, (r: Request[Any]) => Future.successful(Ok))
-    status(result) shouldBe INTERNAL_SERVER_ERROR
+    an[Exception] shouldBe thrownBy(await(result))
   }
 
 }
