@@ -64,10 +64,6 @@ trait AuthorisedActions extends AuthProvider with MicroserviceAuthorisedFunction
         Logger.error("User forbidden", e)
         Forbidden("User forbidden")
       }
-      case e => {
-        Logger.error("Unexpected auth exception", e)
-        InternalServerError("Unexpected auth exception")
-      }
     }
   }
 }
