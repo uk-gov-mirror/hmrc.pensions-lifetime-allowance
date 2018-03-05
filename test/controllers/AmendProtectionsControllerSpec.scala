@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import auth.AuthClientConnectorTrait
 import org.scalatest.BeforeAndAfter
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.mvc.Result
 import util.NinoHelper
