@@ -25,7 +25,8 @@ import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsError, JsObject, JsSuccess, Json}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import play.api.test.Helpers._
@@ -37,7 +38,7 @@ import play.api.libs.json.JsNumber
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
-class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
+class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
