@@ -18,39 +18,31 @@ package controllers
 
 import connectors.NpsConnector
 import model.Error
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.HttpResponse
 
 object LookupController extends LookupController {
   override val npsConnector = NpsConnector
 }
 
-trait LookupController extends BaseController {
+trait LookupController extends BaseController with NPSResponseHandler {
   val npsConnector: NpsConnector
 
   def psaLookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async { implicit request =>
     npsConnector.getPSALookup(psaRef, ltaRef).map { response =>
       response.status match {
         case OK => Ok(response.json)
-        case _ => handleErrorResponse(response)
+        case _ =>
+          val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.json}"))
+          Logger.error(error.toString)
+          InternalServerError(error)
       }
-    }
-  }
-
-  private def handleErrorResponse(response: HttpResponse): Result = {
-    val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.json}"))
-    response.status match {
-      case NOT_FOUND => NotFound(error)
-      case BAD_REQUEST => BadRequest(error)
-      case INTERNAL_SERVER_ERROR => InternalServerError(error)
-      case SERVICE_UNAVAILABLE => ServiceUnavailable(error)
-      case UNAUTHORIZED => Unauthorized(error)
-      case FORBIDDEN => Forbidden(error)
-      case _ => InternalServerError(error)
+    }.recover {
+      case error => handleNPSError(error, "[LookupController.psaLookup]")
     }
   }
 }

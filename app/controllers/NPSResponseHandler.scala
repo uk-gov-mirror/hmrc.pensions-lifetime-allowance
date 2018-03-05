@@ -27,17 +27,17 @@ trait NPSResponseHandler extends BaseController{
 
   private[controllers] def handleNPSError(error : Throwable, errorContext: String): Result = {
     error match {
-      case Upstream5xxResponse(errorDetails, SERVICE_UNAVAILABLE, _) =>
-        Logger.error(s"$errorContext $errorDetails")
+      case err @ Upstream5xxResponse(errorDetails, SERVICE_UNAVAILABLE, _) =>
+        Logger.error(s"$errorContext $errorDetails", err)
         ServiceUnavailable(errorDetails)
-      case Upstream5xxResponse(errorDetails, _, _) =>
-        Logger.error(s"$errorContext $errorDetails")
+      case err @ Upstream5xxResponse(errorDetails, _, _) =>
+        Logger.error(s"$errorContext $errorDetails", err)
         InternalServerError(errorDetails)
-      case Upstream4xxResponse(errorDetails, UNAUTHORIZED, _, _) =>
-        Logger.error(s"$errorContext $errorDetails")
+      case err @ Upstream4xxResponse(errorDetails, UNAUTHORIZED, _, _) =>
+        Logger.error(s"$errorContext $errorDetails", err)
         Unauthorized(errorDetails)
-      case Upstream4xxResponse(errorDetails, _, _, _) =>
-        Logger.error(s"$errorContext $errorDetails")
+      case err @ Upstream4xxResponse(errorDetails, _, _, _) =>
+        Logger.error(s"$errorContext $errorDetails", err)
         InternalServerError(errorDetails)
       case badRequest: BadRequestException =>
         Logger.error(s"$errorContext ${badRequest.getMessage}", badRequest)

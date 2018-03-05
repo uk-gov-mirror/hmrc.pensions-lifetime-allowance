@@ -33,8 +33,9 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.domain.Generator
 import util.NinoHelper
 import play.api.libs.json.JsNumber
+
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
 class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
 
@@ -153,7 +154,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
   "ReadProtectionsController" should {
     "respond to an invalid Read Protections request with BAD_REQUEST" in {
       when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(400, JsError())))
+        .thenReturn(Future.failed(new BadRequestException("bad request")))
 
       val result = testCreateController.readExistingProtections(testNino)(FakeRequest())
       status(result) must be(BAD_REQUEST)
@@ -161,52 +162,14 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
   }
 
   "ReadProtectionsController" should {
-    "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service to a read protections request by passing it back to the caller" in {
+    "handle a 202 (INTERNAL_SERVER_ERROR) response from NPS service to a read protections request by passing it back to the caller" in {
       when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(500, JsSuccess(successfulReadResponseBody))))
+        .thenReturn(Future.successful(model.HttpResponseDetails(202, JsSuccess(successfulReadResponseBody))))
 
       val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
       status(result) must be(INTERNAL_SERVER_ERROR)
     }
   }
-
-  "ReadProtectionsController" should {
-    "handle a 503 (SERVICE_UNAVAILABLE) response from NPS service to a read protections request by passing it back to the caller" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(503, JsSuccess(successfulReadResponseBody))))
-
-      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
-      status(result) must be(SERVICE_UNAVAILABLE)
-    }
-  }
-
-  "ReadProtectionsController" should {
-    "handle a NOT FOUND response from NPS service" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(404, JsSuccess(successfulReadResponseBody))))
-
-      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
-      status(result) must be(NOT_FOUND)
-    }
-  }
-
-  "ReadProtectionsController read protections request" should {
-    "handle a 401 (UNAUTHORIZED) response from NPS service to a read protections request by passing it back to the caller" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-        .thenReturn(Future.successful(model.HttpResponseDetails(401, JsSuccess(successfulReadResponseBody))))
-
-      val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
-      status(result) must be(UNAUTHORIZED)
-    }
-
-    "ReadProtectionsController" should {
-      "handle a 400 (BAD_REQUEST) response from NPS service to a read protections request by passing it back to the caller" in {
-        when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
-          .thenReturn(Future.successful(model.HttpResponseDetails(400, JsSuccess(successfulReadResponseBody))))
-
-        val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
-        status(result) must be(BAD_REQUEST)
-      }
 
       "ReadProtectionsController " should {
         "handle an OK status but non-parseable response body from NPS service to a read protections request by passing an INTERNAL_SERVER_ERROR back to the caller" in {
@@ -261,5 +224,4 @@ class ReadProtectionsControllerSpec extends PlaySpec with OneServerPerSuite with
         }
       }
     }
-  }
-}
+
