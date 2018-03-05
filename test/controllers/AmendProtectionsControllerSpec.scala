@@ -24,18 +24,20 @@ import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import auth.AuthClientConnectorTrait
 import org.scalatest.BeforeAndAfter
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import org.scalatestplus.play.PlaySpec
 import play.api.mvc.Result
 import util.NinoHelper
 import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
+
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream5xxResponse}
 
-class AmendProtectionsControllerSpec  extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
+class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfter with AuthMock {
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)

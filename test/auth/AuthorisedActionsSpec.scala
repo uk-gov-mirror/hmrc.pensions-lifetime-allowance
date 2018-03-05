@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import org.mockito.Matchers
 import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.OneServerPerSuite
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status._
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -36,7 +36,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse}
 
-class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with OneServerPerSuite with AuthMock {
+class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with GuiceOneServerPerSuite with AuthMock {
 
   val ninoGenerator = new Generator(new Random())
   val testNino = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
