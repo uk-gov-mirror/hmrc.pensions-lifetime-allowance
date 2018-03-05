@@ -81,7 +81,7 @@ trait ReadProtectionsController extends BaseController with AuthorisedActions wi
           InternalServerError(error)
       }
     }.recover {
-      case error => handleNPSError(error, "[ReadProtectionsController.readExistingProtections]")
+      case error => handleNPSError(error, "[ReadProtectionsController.readExistingProtectionsCount]")
     }
   }
 }
