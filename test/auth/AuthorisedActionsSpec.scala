@@ -22,7 +22,7 @@ import akka.stream.Materializer
 import connectors._
 import org.mockito.Mockito._
 import _root_.mock.AuthMock
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status._
@@ -51,10 +51,10 @@ class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with GuiceOneServ
     val testAuthConnector = mock[AuthClientConnectorTrait]
     val testCitizenConnector = mock[CitizenDetailsConnector]
 
-    when(testAuthConnector.authorise[Unit](Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+    when(testAuthConnector.authorise[Unit](ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
       .thenReturn(authResponse)
 
-    when(testCitizenConnector.checkCitizenRecord(Matchers.any())(Matchers.any(), Matchers.any()))
+    when(testCitizenConnector.checkCitizenRecord(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
       .thenReturn(citizenCheckResponse)
 
     new AuthorisedActions {

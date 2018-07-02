@@ -22,7 +22,7 @@ import akka.stream.ActorMaterializer
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.NinoHelper
 import play.api.libs.json._
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
@@ -44,7 +44,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
   val ninoGenerator = new Generator(rand)
   val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
-  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+  when(mockCitizenDetailsConnector.checkCitizenRecord(ArgumentMatchers.any[String])(ArgumentMatchers.any(), ArgumentMatchers.any()))
     .thenReturn(Future.successful(CitizenRecordOK))
 
   mockAuthConnector(Future.successful({}))
@@ -126,7 +126,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
 
   "CreateProtectionController" should {
     "respond to a valid Create Protection request with OK" in {
-      when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
 
 
@@ -143,7 +143,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
 
   "CreateProtectionController" should {
     "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.applyForProtection(Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new BadRequestException("bad request")))
 
       val fakeRequest = FakeRequest(

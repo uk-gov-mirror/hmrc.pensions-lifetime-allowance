@@ -19,7 +19,7 @@ package connectors
 import java.util.Random
 
 import com.kenshoo.play.metrics.PlayModule
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfter
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -77,8 +77,8 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
   "The CitizenDetails Connector checkCitizenRecord method" should {
     "return a valid HTTPResponse for successful retrieval" in {
 
-      when(mockHttp.GET[HttpResponse](Matchers.any())
-       (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(200)))
+      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
+       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(HttpResponse(200)))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
@@ -92,8 +92,8 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
       val response = new NotFoundException("")
 
-      when(mockHttp.GET[HttpResponse](Matchers.any())
-       (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.failed(response))
+      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
+       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
@@ -107,8 +107,8 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
       val response = new Upstream4xxResponse("",400,400)
 
-      when(mockHttp.GET[HttpResponse](Matchers.any())
-       (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.failed(response))
+      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
+       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
@@ -122,8 +122,8 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
       val response = new Upstream5xxResponse("",500,500)
 
-      when(mockHttp.GET[HttpResponse](Matchers.any())
-       (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.failed(response))
+      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
+       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
@@ -137,8 +137,8 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
       val response = new Upstream4xxResponse("",423,423)
 
-      when(mockHttp.GET[HttpResponse](Matchers.any())
-       (Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.failed(response))
+      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
+       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 

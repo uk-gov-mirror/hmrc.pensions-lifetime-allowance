@@ -19,7 +19,7 @@ package controllers
 import java.util.Random
 
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import auth.AuthClientConnectorTrait
@@ -43,7 +43,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
   val ninoGenerator = new Generator(rand)
   val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
 
-  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+  when(mockCitizenDetailsConnector.checkCitizenRecord(ArgumentMatchers.any[String])(ArgumentMatchers.any(), ArgumentMatchers.any()))
     .thenReturn(Future.successful(CitizenRecordOK))
 
   mockAuthConnector(Future.successful({}))
@@ -142,7 +142,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
 
   "AmendProtectionController" should {
     "respond to a valid Amend Protection request with OK" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.amendProtection(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulAmendIP2016NPSResponseBody))))
 
       val fakeRequest: FakeRequest[JsValue] = FakeRequest(
@@ -158,7 +158,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
 
   "AmendProtectionController" should {
     "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.amendProtection(Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.amendProtection(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(Upstream5xxResponse("test", INTERNAL_SERVER_ERROR, BAD_GATEWAY)))
 
       val fakeRequest = FakeRequest(
