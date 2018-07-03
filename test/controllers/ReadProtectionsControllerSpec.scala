@@ -20,7 +20,7 @@ import java.util.Random
 
 import akka.stream.Materializer
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import _root_.mock.AuthMock
 import org.scalatest.BeforeAndAfter
@@ -48,7 +48,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
   val testNino = randomNino
   val (testNinoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(testNino)
 
-  when(mockCitizenDetailsConnector.checkCitizenRecord(Matchers.any[String])(Matchers.any(), Matchers.any()))
+  when(mockCitizenDetailsConnector.checkCitizenRecord(ArgumentMatchers.any[String])(ArgumentMatchers.any(), ArgumentMatchers.any()))
     .thenReturn(Future.successful(CitizenRecordOK))
 
   mockAuthConnector(Future.successful({}))
@@ -144,7 +144,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
 
   "ReadProtectionsController" should {
     "respond to a valid Read Protections request with OK" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulReadResponseBody))))
 
       val result = testCreateController.readExistingProtections(testNino)(FakeRequest())
@@ -154,7 +154,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
 
   "ReadProtectionsController" should {
     "respond to an invalid Read Protections request with BAD_REQUEST" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new BadRequestException("bad request")))
 
       val result = testCreateController.readExistingProtections(testNino)(FakeRequest())
@@ -164,7 +164,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
 
   "ReadProtectionsController" should {
     "handle a 202 (INTERNAL_SERVER_ERROR) response from NPS service to a read protections request by passing it back to the caller" in {
-      when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+      when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(202, JsSuccess(successfulReadResponseBody))))
 
       val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
@@ -174,7 +174,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
 
       "ReadProtectionsController " should {
         "handle an OK status but non-parseable response body from NPS service to a read protections request by passing an INTERNAL_SERVER_ERROR back to the caller" in {
-          when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+          when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200, JsError())))
 
           val result = testCreateController.readExistingProtections(testNino).apply(FakeRequest())
@@ -184,7 +184,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
       }
       "ReadProtectionsController" should {
         "return a count of zero to a read protections count request when an empty protections array is returned from NPS" in {
-          when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+          when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyEmptyProtections))))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
@@ -195,7 +195,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
       }
       "ReadProtectionsController" should {
         "return a count of zero to a read protections count request when no protections array is returned from NPS" in {
-          when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+          when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBodyNoProtections))))
 
           val result: Future[Result] = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
@@ -206,7 +206,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
       }
       "ReadProtectionsController" should {
         "return a count of one to a read protections count request when a protections array with a single protection is returned from NPS" in {
-          when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+          when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200,JsSuccess(successfulReadResponseBody))))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())
@@ -217,7 +217,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
 
       "ReadProtectionsController" should {
         "handle an OK status but non-parseable response body from NPS service to a read protections count request by passing an INTERNAL_SERVER_ERROR back to the caller" in {
-          when(mockNpsConnector.readExistingProtections(Matchers.any())(Matchers.any(), Matchers.any()))
+          when(mockNpsConnector.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(model.HttpResponseDetails(200, JsError())))
 
           val result = testCreateController.readExistingProtectionsCount(testNino).apply(FakeRequest())

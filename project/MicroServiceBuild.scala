@@ -42,11 +42,11 @@ private object AppDependencies {
   private val domainVersion = "5.1.0"
   private val hmrcTestVersion = "3.0.0"
   private val scalaTestVersion = "3.0.0"
-  private val mockitoAllVersion = "1.9.5"
+  private val mockitoCoreVersion = "2.18.3"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.10.2"
   private val scalatestPlusPlayVersion = "2.0.0"
-  private val authClientVersion = "2.5.0"
+  private val authClientVersion = "2.6.0"
 
   val compile = Seq(
 
@@ -69,7 +69,7 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "org.mockito" % "mockito-all" % mockitoAllVersion % scope
+        "org.mockito" % "mockito-core" % mockitoCoreVersion % scope
       )
     }.test
   }
@@ -86,7 +86,7 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "com.github.tomakehurst" % "wiremock" % "2.5.0" % scope,
+        "com.github.tomakehurst" % "wiremock" % "2.6.0" % scope,
         "uk.gov.hmrc" %% "auth-client" % authClientVersion
       )
     }.test
