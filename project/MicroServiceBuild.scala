@@ -40,13 +40,13 @@ private object AppDependencies {
   private val logbackJsonLoggerVersion = "3.1.0"
   private val playConfigVersion = "5.0.0"
   private val domainVersion = "5.2.0"
-  private val hmrcTestVersion = "3.1.0"
+  private val hmrcTestVersion = "3.2.0"
   private val scalaTestVersion = "3.0.0"
   private val mockitoCoreVersion = "2.18.3"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.10.2"
   private val scalatestPlusPlayVersion = "2.0.0"
-  private val authClientVersion = "2.12.0-play-25"
+  private val authClientVersion = "2.17.0-play-25"
 
   val compile = Seq(
 
