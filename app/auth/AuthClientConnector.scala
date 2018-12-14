@@ -16,13 +16,13 @@
 
 package auth
 
-import config.WSHttp
+import config.{RunModeConfig, WSHttp}
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.http.CorePost
 import uk.gov.hmrc.play.config.ServicesConfig
 
 // $COVERAGE-OFF$
-  object AuthClientConnector extends AuthClientConnectorTrait {
+  object AuthClientConnector extends AuthClientConnectorTrait with RunModeConfig {
     override val serviceUrl: String = baseUrl("auth")
     override def http: CorePost = WSHttp
   }

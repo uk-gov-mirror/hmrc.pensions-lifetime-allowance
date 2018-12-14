@@ -16,13 +16,14 @@
 
 package connectors
 
-import config.WSHttp
+import config.{RunModeConfig, WSHttp}
 import play.api.http.Status._
 import uk.gov.hmrc.play.config.ServicesConfig
-import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse }
 
-object CitizenDetailsConnector extends CitizenDetailsConnector with ServicesConfig {
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
+
+object CitizenDetailsConnector extends CitizenDetailsConnector with ServicesConfig with RunModeConfig {
 
   override val serviceUrl = baseUrl("citizen-details")
   override val checkRequired = getConfBool("citizen-details.checkRequired", true)
