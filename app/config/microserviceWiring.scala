@@ -16,6 +16,7 @@
 
 package config
 
+import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import play.api.{Configuration, Play}
 import uk.gov.hmrc.http._
@@ -35,6 +36,7 @@ trait WSHttp extends HttpGet with WSGet with HttpPut with WSPut with HttpPost wi
 object WSHttp extends WSHttp {
   override protected def appNameConfiguration: Configuration = Play.current.configuration
 
+  override protected def actorSystem: ActorSystem = Play.current.actorSystem
   override protected val configuration: Option[Config] = Some(Play.current.configuration.underlying)
 }
 
