@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with GuiceOneServ
 
 
   def setupActions(authResponse: Future[Unit], citizenCheckResponse: Future[CitizenRecordCheckResult]): AuthorisedActions = {
-    val testAuthConnector = mock[AuthClientConnectorTrait]
+    val testAuthConnector = mock[AuthClientConnector]
     val testCitizenConnector = mock[CitizenDetailsConnector]
 
     when(testAuthConnector.authorise[Unit](ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
@@ -61,7 +61,7 @@ class AuthorisedActionsSpec extends UnitSpec with MockitoSugar with GuiceOneServ
 
       override val citizenDetailsConnector: CitizenDetailsConnector = testCitizenConnector
 
-      override def authConnector: AuthClientConnectorTrait = testAuthConnector
+      override def authConnector: AuthClientConnector = testAuthConnector
     }
   }
 

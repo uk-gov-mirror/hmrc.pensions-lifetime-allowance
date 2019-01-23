@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package controllers
 
 import auth.{AuthClientConnector, AuthorisedActions}
 import connectors.CitizenDetailsConnector
+import javax.inject.Inject
 import model.ProtectionApplication
 import play.api.mvc._
 import services.ProtectionService
@@ -27,14 +28,11 @@ import model.Error
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object CreateProtectionsController extends CreateProtectionsController {
-  override val protectionService = ProtectionService
-  override val authConnector = AuthClientConnector
-  override val citizenDetailsConnector = CitizenDetailsConnector
-}
+class DefaultCreateProtectionsController @Inject()(val authConnector: AuthClientConnector,
+                                                   val citizenDetailsConnector: CitizenDetailsConnector,
+                                                   val protectionService: ProtectionService) extends CreateProtectionsController
 
 trait CreateProtectionsController extends NPSResponseHandler with AuthorisedActions {
-
   def protectionService: ProtectionService
 
   def applyForProtection(nino: String): Action[JsValue] = Authorised(nino).async(BodyParsers.parse.json) { implicit request =>

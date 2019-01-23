@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
   val validExtraHOutboundHeaders = Seq("Environment" -> Seq("local"), "Authorisation" -> Seq("Bearer abcdef12345678901234567890"))
 
   object testProtectionService extends services.ProtectionService {
-    override val nps = mockNpsConnector
+    override val npsConnector = mockNpsConnector
   }
 
   case class AlwaysExecuteAction(nino: String) extends ActionBuilder[Request] {

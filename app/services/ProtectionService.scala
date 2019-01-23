@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,30 @@
 
 package services
 
-import _root_.util.{NinoHelper, Transformers}
+import _root_.util.NinoHelper
 import connectors.NpsConnector
+import javax.inject.Inject
 import model.{HttpResponseDetails, ProtectionModel, ReadProtectionsModel}
 import play.api.libs.json._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object ProtectionService extends ProtectionService {
-  override val nps: NpsConnector = NpsConnector
-}
+class DefaultProtectionService @Inject()(val npsConnector: NpsConnector) extends ProtectionService
 
 trait ProtectionService {
-
-  val nps: NpsConnector
+  val npsConnector: NpsConnector
 
   def applyForProtection(nino: String, applicationRequestBody: JsObject)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (ninoWithoutSuffix, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
     val npsRequestBody = applicationRequestBody.deepMerge(Json.obj("nino" -> ninoWithoutSuffix))
-    nps.applyForProtection(nino, npsRequestBody) map { npsResponse =>
+    npsConnector.applyForProtection(nino, npsRequestBody) map { npsResponse =>
       val transformedResponseJs = npsResponse.body.flatMap{
         json => Json.fromJson[ProtectionModel](json).map(base => base.copy(nino = base.nino + lastNinoCharOpt.getOrElse("")))
       }
       HttpResponseDetails(npsResponse.status, transformedResponseJs.map(model => Json.toJson[ProtectionModel](model).as[JsObject]))
     }
   }
-
 
   def amendProtection(nino: String,
                       protectionId: Long,
@@ -55,7 +52,7 @@ trait ProtectionService {
       ))
     }
 
-    nps.amendProtection(nino, protectionId, npsRequestBody) map { npsResponse =>
+    npsConnector.amendProtection(nino, protectionId, npsRequestBody) map { npsResponse =>
       val transformedResponseJs = npsResponse.body.flatMap{
         json => Json.fromJson[ProtectionModel](json).map(base => base.copy(nino = base.nino + lastNinoCharOpt.getOrElse("")))
       }
@@ -66,12 +63,11 @@ trait ProtectionService {
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val (_, lastNinoCharOpt) = NinoHelper.dropNinoSuffix(nino)
 
-    nps.readExistingProtections(nino) map { npsResponse =>
+    npsConnector.readExistingProtections(nino) map { npsResponse =>
       val transformedResponseJs = npsResponse.body.flatMap{
         json => Json.fromJson[ReadProtectionsModel](json).map(base => base.copy(nino = base.nino + lastNinoCharOpt.getOrElse("")))
       }
       HttpResponseDetails(npsResponse.status, transformedResponseJs.map(model => Json.toJson[ReadProtectionsModel](model).as[JsObject]))
     }
   }
-
 }

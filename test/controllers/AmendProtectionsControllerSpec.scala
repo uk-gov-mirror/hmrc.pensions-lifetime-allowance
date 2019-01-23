@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import _root_.mock.AuthMock
-import auth.AuthClientConnectorTrait
+import auth.AuthClientConnector
 import org.scalatest.BeforeAndAfter
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -117,12 +117,12 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
   val validExtraHOutboundHeaders = Seq("Environment" -> Seq("local"), "Authorisation" -> Seq("Bearer abcdef12345678901234567890"))
 
   object testProtectionService extends services.ProtectionService {
-    override val nps = mockNpsConnector
+    override val npsConnector = mockNpsConnector
   }
 
   object testAmendController extends AmendProtectionsController {
     override val protectionService = testProtectionService
-    override lazy val authConnector: AuthClientConnectorTrait = mockAuthConnector
+    override lazy val authConnector: AuthClientConnector = mockAuthConnector
     override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
   }
 

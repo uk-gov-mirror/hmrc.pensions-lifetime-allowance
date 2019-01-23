@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 
 package auth
 
-import config.{RunModeConfig, WSHttp}
+import config.DefaultWSHttp
+import javax.inject.Inject
+import play.api.Mode.Mode
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.PlayAuthConnector
-import uk.gov.hmrc.http.CorePost
 import uk.gov.hmrc.play.config.ServicesConfig
 
-// $COVERAGE-OFF$
-  object AuthClientConnector extends AuthClientConnectorTrait with RunModeConfig {
-    override val serviceUrl: String = baseUrl("auth")
-    override def http: CorePost = WSHttp
-  }
-// $COVERAGE-ON$
-  trait AuthClientConnectorTrait extends PlayAuthConnector with ServicesConfig
+class DefaultAuthClientConnector @Inject()(val http: DefaultWSHttp,
+                                           environment: Environment,
+                                           override val runModeConfiguration: Configuration) extends AuthClientConnector {
+  override val mode: Mode = environment.mode
+  override lazy val serviceUrl: String = baseUrl("auth")
+}
+
+trait AuthClientConnector extends PlayAuthConnector with ServicesConfig

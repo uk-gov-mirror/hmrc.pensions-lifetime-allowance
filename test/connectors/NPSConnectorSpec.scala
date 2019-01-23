@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,30 @@ package connectors
 
 import java.util.Random
 
+import config.WSHttp
+import org.scalatest.mockito.MockitoSugar
 import util._
 import play.api.libs.json._
-import uk.gov.hmrc.play.test.UnitSpec
-import config.WSHttp
 import uk.gov.hmrc.domain.Generator
-import org.scalatest.mockito.MockitoSugar
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.time.DateTimeUtils
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
+  private val mockHttp = mock[WSHttp]
+
   object testNPSConnector extends NpsConnector {
     override val serviceUrl = "http://localhost:80"
-    override def http = WSHttp
+    override def http: WSHttp = mockHttp
     override val serviceAccessToken = "token"
     override val serviceEnvironment = "environment"
 
     override val audit : AuditConnector = mock[AuditConnector]
   }
-
-  import events.NPSCreateLTAEvent
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
@@ -53,8 +54,8 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
   "The NPS connector implicit header carrier  " should {
     "should have the environment and authorisation headers set" in {
-      testNPSConnector.addExtraHeaders.headers.find(_._1 == "Environment").isDefined shouldBe true
-      testNPSConnector.addExtraHeaders.headers.find(_._1 == "Authorization").isDefined shouldBe true
+      testNPSConnector.addExtraHeaders.headers.exists(_._1 == "Environment") shouldBe true
+      testNPSConnector.addExtraHeaders.headers.exists(_._1 == "Authorization") shouldBe true
     }
   }
 

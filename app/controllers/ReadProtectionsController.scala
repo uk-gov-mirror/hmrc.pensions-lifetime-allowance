@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,21 @@ package controllers
 
 import auth.{AuthClientConnector, AuthorisedActions}
 import connectors.CitizenDetailsConnector
+import javax.inject.Inject
 import model.Error
-import play.api.mvc._
-import play.api.libs.json._
-import play.api.mvc.Action
-import services.ProtectionService
-import model.HttpResponseDetails
 import play.api.Logger
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import play.api.libs.json._
+import play.api.mvc.{Action, _}
+import services.ProtectionService
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object ReadProtectionsController extends ReadProtectionsController {
-  override val protectionService = ProtectionService
-  override val authConnector = AuthClientConnector
-  override val citizenDetailsConnector = CitizenDetailsConnector
-}
+class DefaultReadProtectionsController @Inject()(val authConnector: AuthClientConnector,
+                                                 val citizenDetailsConnector: CitizenDetailsConnector,
+                                                 val protectionService: ProtectionService) extends ReadProtectionsController
 
 trait ReadProtectionsController extends BaseController with AuthorisedActions with NPSResponseHandler {
-
   def protectionService: ProtectionService
 
   /**
