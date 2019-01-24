@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@
 package controllers
 
 import connectors.NpsConnector
+import javax.inject.Inject
 import model.Error
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, Result}
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object LookupController extends LookupController {
-  override val npsConnector = NpsConnector
-}
+class DefaultLookupController @Inject()(val npsConnector: NpsConnector) extends LookupController
 
 trait LookupController extends BaseController with NPSResponseHandler {
   val npsConnector: NpsConnector

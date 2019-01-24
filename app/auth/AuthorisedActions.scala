@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
-
-trait AuthorisedActions extends AuthProvider with MicroserviceAuthorisedFunctionTrait with Controller {
-
+trait AuthorisedActions extends AuthProvider with Controller with AuthorisedFunctions {
   val citizenDetailsConnector: CitizenDetailsConnector
   case class Authorised(nino: String)(implicit ec: ExecutionContext) extends ActionBuilder[Request] {
 
@@ -47,9 +45,12 @@ trait AuthorisedActions extends AuthProvider with MicroserviceAuthorisedFunction
           case CitizenRecordOK => block(request)
           case CitizenRecordNotFound => logErrorAndRespond(s"Citizen Record Check: Not Found for '$nino'", NotFound)
           case CitizenRecordLocked => logErrorAndRespond(s"Citizen Record Check: Locked for '$nino'", Locked)
-          case CitizenRecordOther4xxResponse(e) => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: ${e.upstreamResponseCode} response for '$nino'", BadRequest, e)
-          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream 503 response for '$nino'", GatewayTimeout, e)
-          case CitizenRecord5xxResponse(e) => logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream ${e.upstreamResponseCode} response for '$nino'", InternalServerError, e)
+          case CitizenRecordOther4xxResponse(e) =>
+            logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: ${e.upstreamResponseCode} response for '$nino'", BadRequest, e)
+          case CitizenRecord5xxResponse(e) if e.upstreamResponseCode == 503 =>
+            logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream 503 response for '$nino'", GatewayTimeout, e)
+          case CitizenRecord5xxResponse(e) =>
+            logErrorAndRespondFromUpstreamResponse(s"Citizen Record Check: Upstream ${e.upstreamResponseCode} response for '$nino'", InternalServerError, e)
           case _ => logErrorAndRespond("err", InternalServerError)
         }
       }.recover(authErrorHandling[A](request))

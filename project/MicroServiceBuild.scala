@@ -34,20 +34,19 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val microserviceBootstrapVersion = "10.0.0"
+  private val bootstrapPlayVersion = "4.7.0"
   private val domainVersion = "5.3.0"
-  private val hmrcTestVersion = "3.3.0"
+  private val hmrcTestVersion = "3.4.0-play-25"
   private val scalaTestVersion = "3.0.0"
   private val mockitoCoreVersion = "2.18.3"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.10.2"
   private val scalatestPlusPlayVersion = "2.0.0"
-  private val authClientVersion = "2.17.0-play-25"
+  private val authClientVersion = "2.18.0-play-25"
 
   val compile = Seq(
-
     ws,
-    "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion,
+    "uk.gov.hmrc" %% "bootstrap-play-25" % bootstrapPlayVersion,
     "uk.gov.hmrc" %% "domain" % domainVersion
   )
 
@@ -57,7 +56,7 @@ private object AppDependencies {
   }
 
   object Test {
-    def apply() = new TestDependencies {
+    def apply(): Seq[ModuleID] = new TestDependencies {
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
@@ -71,10 +70,8 @@ private object AppDependencies {
   }
 
   object IntegrationTest {
-    def apply() = new TestDependencies {
-
+    def apply(): Seq[ModuleID] = new TestDependencies {
       override lazy val scope: String = "it"
-
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
@@ -88,6 +85,6 @@ private object AppDependencies {
     }.test
   }
 
-  def apply() = compile ++ Test() ++ IntegrationTest()
+  def apply(): Seq[ModuleID] = compile ++ Test() ++ IntegrationTest()
 }
 

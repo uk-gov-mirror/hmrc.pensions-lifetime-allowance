@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,25 @@
 
 package connectors
 
-import config.{RunModeConfig, WSHttp}
+import config.DefaultWSHttp
+import javax.inject.Inject
+import play.api.Mode.Mode
 import play.api.http.Status._
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
 
-object CitizenDetailsConnector extends CitizenDetailsConnector with ServicesConfig with RunModeConfig {
+class DefaultCitizenDetailsConnector @Inject()(val http: DefaultWSHttp,
+                                               environment: Environment,
+                                               override val runModeConfiguration: Configuration)
+  extends CitizenDetailsConnector with ServicesConfig {
 
-  override val serviceUrl = baseUrl("citizen-details")
-  override val checkRequired = getConfBool("citizen-details.checkRequired", true)
-  override def http = WSHttp
+  override lazy val serviceUrl: String = baseUrl("citizen-details")
+  override lazy val checkRequired: Boolean = getConfBool("citizen-details.checkRequired", defBool = true)
 
+  val mode: Mode = environment.mode
 }
 
 sealed trait CitizenRecordCheckResult
@@ -39,7 +45,6 @@ case class CitizenRecordOther4xxResponse(e: Upstream4xxResponse) extends Citizen
 case class CitizenRecord5xxResponse(e: Upstream5xxResponse) extends CitizenRecordCheckResult
 
 trait CitizenDetailsConnector {
-
   def http: HttpGet
   val serviceUrl: String
   val checkRequired: Boolean

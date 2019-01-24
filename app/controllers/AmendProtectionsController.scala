@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package controllers
 
-import auth.{AuthClientConnector, AuthClientConnectorTrait, AuthorisedActions}
+import auth.{AuthClientConnector, AuthorisedActions}
 import connectors.CitizenDetailsConnector
+import javax.inject.Inject
 import model.ProtectionAmendment
 import play.api.mvc._
 import services.ProtectionService
@@ -28,16 +29,12 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
-object AmendProtectionsController extends AmendProtectionsController {
-  override val protectionService = ProtectionService
-  override val authConnector: AuthClientConnectorTrait = AuthClientConnector
-  override val citizenDetailsConnector = CitizenDetailsConnector
-}
+class DefaultAmendProtectionsController @Inject()(val authConnector: AuthClientConnector,
+                                                  val citizenDetailsConnector: CitizenDetailsConnector,
+                                                  val protectionService: ProtectionService) extends AmendProtectionsController
 
 trait AmendProtectionsController extends NPSResponseHandler with AuthorisedActions {
-
   def protectionService: ProtectionService
-
   def amendProtection(nino: String, id: String): Action[JsValue] = Authorised(nino).async(BodyParsers.parse.json) { implicit request =>
 
     Try{id.toLong}.map { protectionId =>

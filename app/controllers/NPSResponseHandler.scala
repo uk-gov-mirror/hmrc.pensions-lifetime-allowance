@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import model.{Error, HttpResponseDetails}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.http.{ BadRequestException, Upstream4xxResponse, Upstream5xxResponse }
 
 trait NPSResponseHandler extends BaseController{
@@ -49,9 +49,8 @@ trait NPSResponseHandler extends BaseController{
   private[controllers] def handleNPSSuccess(response: HttpResponseDetails): Result = {
     response.status match {
       case OK if response.body.isSuccess => Ok(response.body.get)
-      case CONFLICT if response.body.isSuccess => Conflict(response.body.get) // this is a normal/expected response
-      case _ => {
-        //  error response handling
+      case CONFLICT if response.body.isSuccess => Conflict(response.body.get)
+      case _ =>
         val responseErrorDetails = if (!response.body.isSuccess) {
           ", but unable to parse the NPS response body"
         } else {
@@ -59,7 +58,6 @@ trait NPSResponseHandler extends BaseController{
         }
         val error = Json.toJson(Error("NPS request resulted in a response with: HTTP status=" + response.status + responseErrorDetails))
         InternalServerError(error)
-      }
     }
   }
 }

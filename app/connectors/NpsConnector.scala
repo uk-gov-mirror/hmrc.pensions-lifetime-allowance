@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,34 @@
 
 package connectors
 
-import config.{MicroserviceAuditConnector, RunModeConfig, WSHttp}
+import config.{DefaultWSHttp, MicroserviceAuditConnector}
 import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
+import javax.inject.Inject
 import model.{Error, HttpResponseDetails}
-import play.api.Logger
+import play.api.Mode.Mode
+import play.api.{Configuration, Environment, Logger}
 import util.NinoHelper
 import play.api.libs.json._
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpGet, HttpPost, HttpPut, HttpReads, HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
-import uk.gov.hmrc.http.logging.Authorization
 
-object NpsConnector extends NpsConnector with ServicesConfig with RunModeConfig {
+class DefaultNpsConnector @Inject()(val http: DefaultWSHttp,
+                                    environment: Environment,
+                                    override val runModeConfiguration: Configuration) extends NpsConnector with ServicesConfig {
+  override lazy val serviceUrl: String = baseUrl("nps")
+  override lazy val audit: MicroserviceAuditConnector.type = MicroserviceAuditConnector
+  override lazy val serviceAccessToken: String = getConfString("nps.accessToken", "")
+  override lazy val serviceEnvironment: String = getConfString("nps.environment", "")
 
-  override val serviceUrl = baseUrl("nps")
-  override def http = WSHttp
-  override val audit = MicroserviceAuditConnector
-  override val serviceAccessToken = getConfString("nps.accessToken", "")
-  override val serviceEnvironment = getConfString("nps.environment", "")
-
+  val mode: Mode = environment.mode
 }
 
 trait NpsConnector {
-
   def http: HttpGet with HttpPost with HttpPut
 
   val serviceUrl: String
