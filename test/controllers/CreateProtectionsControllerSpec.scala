@@ -17,45 +17,58 @@
 package controllers
 
 import java.util.Random
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc._
 import util.NinoHelper
 import play.api.libs.json._
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.domain.Generator
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import _root_.mock.AuthMock
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.test.Helpers._
+import services.ProtectionService
+
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
-class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfter with AuthMock {
+class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with AuthMock with GuiceOneServerPerSuite {
 
   private implicit val system: ActorSystem = ActorSystem("test-sys")
   private implicit val mat: ActorMaterializer = ActorMaterializer()
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
-  val mockCitizenDetailsConnector = mock[CitizenDetailsConnector]
+  val mockCitizenDetailsConnector: CitizenDetailsConnector = mock[CitizenDetailsConnector]
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
   when(mockCitizenDetailsConnector.checkCitizenRecord(ArgumentMatchers.any[String])(ArgumentMatchers.any(), ArgumentMatchers.any()))
     .thenReturn(Future.successful(CitizenRecordOK))
 
   mockAuthConnector(Future.successful({}))
 
-  val testNino = randomNino
+  val testNino: String = randomNino
   val (testNinoWithoutSuffix, _) = NinoHelper.dropNinoSuffix(testNino)
+  implicit lazy val cc = app.injector.instanceOf[ControllerComponents]
+  val mockService: ProtectionService = mock[ProtectionService]
+  val mockNPSResponseHandler: NPSResponseHandler = mock[NPSResponseHandler]
 
-  implicit val hc = HeaderCarrier()
-  val mockNpsConnector = mock[NpsConnector]
+   val controller: CreateProtectionsController = new CreateProtectionsController(
+     mockAuthConnector,
+    citizenDetailsConnector = mockCitizenDetailsConnector,
+    mockService, cc
+  )
 
-  val validApplicationBody = Json.parse(
+  implicit lazy val hc = HeaderCarrier()
+  val mockNpsConnector: NpsConnector = mock[NpsConnector]
+  val mockHandleNpsResponse: NPSResponseHandler = mock[NPSResponseHandler]
+  val validApplicationBody: JsValue = Json.parse(
     """
       |{
       |  "protectionType" : "FP2016"
@@ -63,17 +76,17 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
     """.stripMargin
   )
 
-  val invalidApplicationBody = Json.parse(
+  val invalidApplicationBody: JsValue = Json.parse(
     """
       |{
       |  "type" : 100000
       |}
     """.stripMargin)
 
-  val successfulCreateFP2016NPSResponseBody = Json.parse(
+  val successfulCreateFP2016NPSResponseBody: JsObject = Json.parse(
     s"""
        |  {
-       |      "nino": "${testNinoWithoutSuffix}",
+       |      "nino": "$testNinoWithoutSuffix",
        |      "pensionSchemeAdministratorCheckReference" : "PSA123456789",
        |      "protection": {
        |        "id": 1,
@@ -90,10 +103,10 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
        |
     """.stripMargin).as[JsObject]
 
-  val unsuccessfulCreateFP2016NPSResponseBody = Json.parse(
+  val unsuccessfulCreateFP2016NPSResponseBody: JsObject = Json.parse(
     s"""
        |  {
-       |      "nino": "${testNinoWithoutSuffix}",
+       |      "nino": "$testNinoWithoutSuffix",
        |      "protection": {
        |        "id": 1,
        |        "version": 1,
@@ -104,72 +117,56 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
        |  }
     """.stripMargin).as[JsObject]
 
-  val standardHeaders = Seq("Content-type" -> Seq("application/json"))
-  val validExtraHOutboundHeaders = Seq("Environment" -> Seq("local"), "Authorisation" -> Seq("Bearer abcdef12345678901234567890"))
+  val standardHeaders: Seq[(String, Seq[String])] = Seq("Content-type" -> Seq("application/json"))
+  val validExtraHOutboundHeaders: Seq[(String, Seq[String])] = Seq("Environment" -> Seq("local"), "Authorisation" -> Seq("Bearer abcdef12345678901234567890"))
 
-  object testProtectionService extends services.ProtectionService {
-    override val npsConnector = mockNpsConnector
-  }
 
-  case class AlwaysExecuteAction(nino: String) extends ActionBuilder[Request] {
-
-    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) = {
-      block(request)
-    }
-  }
-
-  object testCreateController extends CreateProtectionsController {
-    override val protectionService = testProtectionService
-    override lazy val authConnector = mockAuthConnector
-    override lazy val citizenDetailsConnector = mockCitizenDetailsConnector
+  def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
+    block(request)
   }
 
   "CreateProtectionController" should {
     "respond to a valid Create Protection request with OK" in {
-      when(mockNpsConnector.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockService.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
 
 
-      val fakeRequest: FakeRequest[JsValue] = FakeRequest(
+      lazy val fakeRequest: FakeRequest[JsValue] = FakeRequest(
         method = "POST",
         uri = "",
         headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
-      val result: Future[Result] = testCreateController.applyForProtection(testNino).apply(fakeRequest)
+      lazy val result: Future[Result] = controller.applyForProtection(testNino).apply(fakeRequest)
       status(result) shouldBe OK
     }
-  }
 
-  "CreateProtectionController" should {
     "handle a 400 (BAD_REQUEST) response from NPS service by passing it back to the caller" in {
-      when(mockNpsConnector.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockService.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new BadRequestException("bad request")))
 
-      val fakeRequest = FakeRequest(
+      lazy val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",
         headers = FakeHeaders(Seq("content-type" -> "application.json")),
         body = validApplicationBody)
 
-      val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
+      lazy val result = controller.applyForProtection(testNino).apply(fakeRequest)
       status(result) shouldBe BAD_REQUEST
     }
 
-    "CreateProtectionController" should {
-      "handle an invalid Json submission" in {
-        val fakeRequest = FakeRequest(
-          method = "POST",
-          uri = "",
-          headers = FakeHeaders(Seq("content-type" -> "application.json")),
-          body = invalidApplicationBody)
+    "handle an invalid Json submission" in {
+      lazy val fakeRequest = FakeRequest(
+        method = "POST",
+        uri = "",
+        headers = FakeHeaders(Seq("content-type" -> "application.json")),
+        body = invalidApplicationBody)
 
-        val result = testCreateController.applyForProtection(testNino).apply(fakeRequest)
-        status(result) shouldBe BAD_REQUEST
-        await(jsonBodyOf(result)) shouldBe Json.obj("message" -> JsString(
-          "body failed validation with errors: List((/protectionType,List(ValidationError(List(error.path.missing),WrappedArray()))))"
-        ))
-      }
+      lazy val result = controller.applyForProtection(testNino).apply(fakeRequest)
+      status(result) shouldBe BAD_REQUEST
+      await(jsonBodyOf(result)) shouldBe Json.obj("message" -> JsString(
+        "body failed validation with errors: List((/protectionType,List(JsonValidationError(List(error.path.missing),WrappedArray()))))"
+      ))
     }
   }
 }

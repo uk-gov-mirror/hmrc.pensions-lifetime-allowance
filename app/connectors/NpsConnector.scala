@@ -16,36 +16,36 @@
 
 package connectors
 
-import config.{DefaultWSHttp, MicroserviceAuditConnector}
 import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
 import javax.inject.Inject
 import model.{Error, HttpResponseDetails}
-import play.api.Mode.Mode
+import play.api.Mode
 import play.api.{Configuration, Environment, Logger}
 import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultNpsConnector @Inject()(val http: DefaultWSHttp,
+class DefaultNpsConnector @Inject()(val http: DefaultHttpClient,
                                     environment: Environment,
-                                    override val runModeConfiguration: Configuration) extends NpsConnector with ServicesConfig {
-  override lazy val serviceUrl: String = baseUrl("nps")
-  override lazy val audit: MicroserviceAuditConnector.type = MicroserviceAuditConnector
-  override lazy val serviceAccessToken: String = getConfString("nps.accessToken", "")
-  override lazy val serviceEnvironment: String = getConfString("nps.environment", "")
+                                    val runModeConfiguration: Configuration,
+                                    servicesConfig: ServicesConfig,
+                                    val audit: AuditConnector) extends NpsConnector {
+  override lazy val serviceUrl: String = servicesConfig.baseUrl("nps")
+  override lazy val serviceAccessToken: String = servicesConfig.getConfString("nps.accessToken", "")
+  override lazy val serviceEnvironment: String = servicesConfig.getConfString("nps.environment", "")
 
   val mode: Mode = environment.mode
 }
 
 trait NpsConnector {
-  def http: HttpGet with HttpPost with HttpPut
-
+  val http: DefaultHttpClient
   val serviceUrl: String
   val serviceAccessToken: String
   val serviceEnvironment: String
