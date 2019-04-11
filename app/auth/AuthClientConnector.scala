@@ -16,18 +16,19 @@
 
 package auth
 
-import config.DefaultWSHttp
 import javax.inject.Inject
-import play.api.Mode.Mode
+import play.api.Mode
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.PlayAuthConnector
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 
-class DefaultAuthClientConnector @Inject()(val http: DefaultWSHttp,
+class DefaultAuthClientConnector @Inject()(val http: DefaultHttpClient,
                                            environment: Environment,
-                                           override val runModeConfiguration: Configuration) extends AuthClientConnector {
-  override val mode: Mode = environment.mode
-  override lazy val serviceUrl: String = baseUrl("auth")
+                                           val runModeConfiguration: Configuration,
+                                           servicesConfig: ServicesConfig) extends AuthClientConnector {
+  val mode: Mode = environment.mode
+  override lazy val serviceUrl: String = servicesConfig.baseUrl("auth")
 }
 
-trait AuthClientConnector extends PlayAuthConnector with ServicesConfig
+trait AuthClientConnector extends PlayAuthConnector

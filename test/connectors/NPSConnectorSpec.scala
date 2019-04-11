@@ -18,13 +18,14 @@ package connectors
 
 import java.util.Random
 
-import config.WSHttp
 import org.scalatest.mockito.MockitoSugar
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
+import uk.gov.hmrc.play.http.ws.WSHttp
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.time.DateTimeUtils
 
@@ -32,11 +33,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
-  private val mockHttp = mock[WSHttp]
+  private val mockHttp = mock[DefaultHttpClient]
 
   object testNPSConnector extends NpsConnector {
     override val serviceUrl = "http://localhost:80"
-    override def http: WSHttp = mockHttp
+    override val http: DefaultHttpClient = mockHttp
     override val serviceAccessToken = "token"
     override val serviceEnvironment = "environment"
 
@@ -47,7 +48,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
   val ninoGenerator = new Generator(rand)
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  val testNino = randomNino
+  val testNino: String = randomNino
   val (testNinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(testNino)
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -100,7 +101,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val requestStr =
         s"""
           |{
-          | "nino": "${testNinoWithoutSuffix}",
+          | "nino": "$testNinoWithoutSuffix",
           | "protection": {
           |   "type": 1
           |   }
@@ -110,7 +111,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val responseStr =
         s"""
           {
-          |"nino": "${testNinoWithoutSuffix}",
+          |"nino": "$testNinoWithoutSuffix",
           | "protection": {
           |   "type": 1
           |  }
@@ -131,7 +132,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val requestStr =
         s"""
            |{
-           | "nino": "${t1NinoWithoutSuffix}",
+           | "nino": "$t1NinoWithoutSuffix",
            | "protection": {
            |   "type": 1
            |   }
@@ -141,7 +142,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val responseStr =
         s"""
           {
-           |"nino": "${t2NinoWithoutSuffix}",
+           |"nino": "$t2NinoWithoutSuffix",
            | "protection": {
            |   "type": 1
            |  }
@@ -159,13 +160,13 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val requestStr =
         s"""
            |{
-           | "nino": "${testNinoWithoutSuffix}"
+           | "nino": "$testNinoWithoutSuffix"
            | }
         """.stripMargin
       val responseStr =
         s"""
           {
-           |"nino": "${testNinoWithoutSuffix}",
+           |"nino": "$testNinoWithoutSuffix",
            | "protection": {
            |   "type": 1
            |  }
@@ -176,7 +177,7 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
         "http://localhost:80/path",
         testNino,
         DateTimeUtils.now,
-        HttpResponse(200, Some((responseBody))))
+        HttpResponse(200, Some(responseBody)))
       responseDetails.status shouldBe 200
       responseDetails.body.isSuccess shouldBe true
     }
@@ -189,13 +190,13 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
       val requestStr =
         s"""
            |{
-           | "nino": "${t1NinoWithoutSuffix}"
+           | "nino": "$t1NinoWithoutSuffix"
            | }
         """.stripMargin
       val responseStr =
         s"""
           {
-           |"nino": "${t2NinoWithoutSuffix}",
+           |"nino": "$t2NinoWithoutSuffix",
            | "protection": {
            |   "type": 1
            |  }

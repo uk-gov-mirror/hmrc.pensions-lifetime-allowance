@@ -20,10 +20,12 @@ import model.{Error, HttpResponseDetails}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.http.{ BadRequestException, Upstream4xxResponse, Upstream5xxResponse }
+import play.api.mvc.Results._
+import play.api.http.Status._
 
-trait NPSResponseHandler extends BaseController{
+import uk.gov.hmrc.http._
+
+trait NPSResponseHandler {
 
   private[controllers] def handleNPSError(error : Throwable, errorContext: String): Result = {
     error match {

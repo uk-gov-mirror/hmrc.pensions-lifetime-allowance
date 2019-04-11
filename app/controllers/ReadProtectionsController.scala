@@ -22,18 +22,20 @@ import javax.inject.Inject
 import model.Error
 import play.api.Logger
 import play.api.libs.json._
-import play.api.mvc.{Action, _}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.ProtectionService
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DefaultReadProtectionsController @Inject()(val authConnector: AuthClientConnector,
-                                                 val citizenDetailsConnector: CitizenDetailsConnector,
-                                                 val protectionService: ProtectionService) extends ReadProtectionsController
+class ReadProtectionsController @Inject()(val authConnector: AuthClientConnector,
+                                          val citizenDetailsConnector: CitizenDetailsConnector,
+                                          val protectionService: ProtectionService,
+                                          val cc: ControllerComponents
+                                          ) extends BackendController(cc) with AuthorisedActions with NPSResponseHandler  {
 
-trait ReadProtectionsController extends BaseController with AuthorisedActions with NPSResponseHandler {
-  def protectionService: ProtectionService
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   /**
     * Return the full details of current versions of all protections held by the individual
@@ -41,17 +43,19 @@ trait ReadProtectionsController extends BaseController with AuthorisedActions wi
     * @param nino national insurance number of the individual
     * @return json object full details of the existing protections held fby the individual
     */
-  def readExistingProtections(nino: String): Action[AnyContent] = Authorised(nino).async { implicit request =>
-    protectionService.readExistingProtections(nino).map { response =>
-      response.status match {
-        case OK if response.body.isSuccess => Ok(response.body.get)
-        case _ =>
-          val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.body}"))
-          Logger.error(error.toString)
-          InternalServerError(error)
+  def readExistingProtections(nino: String): Action[AnyContent] = Action.async { implicit request =>
+    userAuthorised(nino) {
+      protectionService.readExistingProtections(nino).map { response =>
+        response.status match {
+          case OK if response.body.isSuccess => Ok(response.body.get)
+          case _ =>
+            val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.body}"))
+            Logger.error(error.toString)
+            InternalServerError(error)
+        }
+      }.recover {
+        case error => handleNPSError(error, "[ReadProtectionsController.readExistingProtections]")
       }
-    }.recover {
-      case error => handleNPSError(error, "[ReadProtectionsController.readExistingProtections]")
     }
   }
 
@@ -63,14 +67,13 @@ trait ReadProtectionsController extends BaseController with AuthorisedActions wi
   def readExistingProtectionsCount(nino: String): Action[AnyContent] = Action.async { implicit request =>
     protectionService.readExistingProtections(nino).map { response =>
       response.status match {
-        case OK if response.body.isSuccess => {
+        case OK if response.body.isSuccess =>
           val protectionsArrayJsValue = response.body.get \ "lifetimeAllowanceProtections" getOrElse JsNumber(0)
           val count = protectionsArrayJsValue match {
             case protectionsJsArray: JsArray => protectionsJsArray.value.size
             case _ => 0
           }
           Ok(JsObject(Seq("count" -> JsNumber(count))))
-        }
         case _ =>
           val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.body}"))
           Logger.error(error.toString)

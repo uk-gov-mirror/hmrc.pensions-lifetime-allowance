@@ -21,15 +21,17 @@ import javax.inject.Inject
 import model.Error
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DefaultLookupController @Inject()(val npsConnector: NpsConnector) extends LookupController
+class DefaultLookupController @Inject()(val npsConnector: NpsConnector,
+                                        cc: ControllerComponents)
+                                        extends BackendController(cc) with NPSResponseHandler {
 
-trait LookupController extends BaseController with NPSResponseHandler {
-  val npsConnector: NpsConnector
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   def psaLookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async { implicit request =>
     npsConnector.getPSALookup(psaRef, ltaRef).map { response =>

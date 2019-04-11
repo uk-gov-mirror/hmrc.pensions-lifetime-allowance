@@ -18,25 +18,13 @@ package config
 
 import auth.{AuthClientConnector, DefaultAuthClientConnector}
 import connectors.{CitizenDetailsConnector, DefaultCitizenDetailsConnector, DefaultNpsConnector, NpsConnector}
-import controllers._
-import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
+import play.api.inject.{Binding, Module}
 import services.{DefaultProtectionService, ProtectionService}
 
 class ServiceBindings extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
-    bindDeps() ++ bindControllers() ++ bindServices() ++ bindConnectors()
-
-  private def bindDeps(): Seq[Binding[_]] = Seq(
-    bind(classOf[WSHttp]).to(classOf[DefaultWSHttp]).eagerly()
-  )
-
-  private def bindControllers(): Seq[Binding[_]] = Seq(
-    bind(classOf[AmendProtectionsController]).to(classOf[DefaultAmendProtectionsController]).eagerly(),
-    bind(classOf[CreateProtectionsController]).to(classOf[DefaultCreateProtectionsController]).eagerly(),
-    bind(classOf[LookupController]).to(classOf[DefaultLookupController]).eagerly(),
-    bind(classOf[ReadProtectionsController]).to(classOf[DefaultReadProtectionsController]).eagerly()
-  )
+    bindServices() ++ bindConnectors()
 
   private def bindServices(): Seq[Binding[_]] = Seq(
     bind(classOf[ProtectionService]).to(classOf[DefaultProtectionService]).eagerly()

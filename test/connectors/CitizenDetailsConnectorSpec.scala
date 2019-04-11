@@ -25,33 +25,42 @@ import org.scalatest.BeforeAndAfter
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.domain.Generator
 import org.scalatest.mockito.MockitoSugar
+import play.api.inject.guice.GuiceableModule
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 
 
 class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFakeApplication with BeforeAndAfter {
 
-  override def bindModules = Seq(new PlayModule)
-  val mockHttp = mock[HttpGet]
+  override def bindModules: Seq[GuiceableModule] = Seq(new PlayModule)
+
+  val mockHttp: DefaultHttpClient = mock[DefaultHttpClient]
 
   object testCitizenDetailsConnector extends CitizenDetailsConnector {
     override val serviceUrl = "http://localhost:80"
-    override def http = mockHttp
+
+    override def http: DefaultHttpClient = mockHttp
+
     override val checkRequired = true
   }
 
   object NoCheckRequiredCitizenDetailsConnector extends CitizenDetailsConnector {
     override val serviceUrl = "http://localhost:80"
-    override def http = mockHttp
+
+    override def http: DefaultHttpClient = mockHttp
+
     override val checkRequired = false
   }
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
+
   def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
 
-  val testNino = randomNino
+  val testNino: String = randomNino
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -78,67 +87,61 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
     "return a valid HTTPResponse for successful retrieval" in {
 
       when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(HttpResponse(200)))
+        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(HttpResponse(200)))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
       val res = await(f)
       res shouldBe CitizenRecordOK
     }
-  }
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
     "return an error if NotFoundException received" in {
 
       val response = new NotFoundException("")
 
       when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
+        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
       val res = await(f)
       res shouldBe CitizenRecordNotFound
     }
-  }
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
     "return an error if Upstream4xxResponse received" in {
 
-      val response = new Upstream4xxResponse("",400,400)
+      val response = new Upstream4xxResponse("", 400, 400)
 
       when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
+        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
       val res = await(f)
       res shouldBe CitizenRecordOther4xxResponse(response)
     }
-  }
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
+
     "return an error if Upstream5xxResponse received" in {
 
-      val response = new Upstream5xxResponse("",500,500)
+      val response = new Upstream5xxResponse("", 500, 500)
 
       when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
+        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 
       val res = await(f)
       res shouldBe CitizenRecord5xxResponse(response)
     }
-  }
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
+
     "return an error if CitizenRecordLocked received" in {
 
-      val response = new Upstream4xxResponse("",423,423)
+      val response = new Upstream4xxResponse("", 423, 423)
 
       when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-       (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
+        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
 
       val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
 

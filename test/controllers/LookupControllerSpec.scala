@@ -24,6 +24,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
@@ -32,39 +33,46 @@ import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse}
 
 class LookupControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
-  implicit val hc = HeaderCarrier()
+  implicit lazy val hc = HeaderCarrier()
   val mockNpsConnector: NpsConnector = mock[NpsConnector]
 
-  val validResponse: JsValue = Json.parse(
+  implicit lazy val cc = app.injector.instanceOf[ControllerComponents]
+
+
+  lazy val validResponse: JsValue = Json.parse(
     s"""{"pensionSchemeAdministratorCheckReference": "PSA12345678A","ltaType": 7,"psaCheckResult": 1,"relevantAmount": 25000}"""
   )
 
-  object testController extends LookupController {
-    override val npsConnector: NpsConnector = mockNpsConnector
+  lazy val controller = new DefaultLookupController(mockNpsConnector, cc
+  )
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockNpsConnector)
   }
 
-  override protected def beforeEach(): Unit = reset(mockNpsConnector)
-
+  "LookupController" should {
     "return 200 when OK is returned from nps" in {
       when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(OK, Some(validResponse))))
 
-      val result = testController.psaLookup("PSA12345678A", "IP141000000000A").apply(FakeRequest())
+      val result = controller.psaLookup("PSA12345678A", "IP141000000000A").apply(FakeRequest())
       status(result) mustBe OK
       contentAsString(result) mustBe validResponse.toString
     }
-    "return 400 when Bad Request is returned from nps" in{
+    "return 400 when Bad Request is returned from nps" in {
       when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
-         .thenReturn(Future.failed(new BadRequestException("bad request")))
+        .thenReturn(Future.failed(new BadRequestException("bad request")))
 
-      val result = testController.psaLookup("PSA12345678A", "IP14100000000A").apply(FakeRequest())
+      val result = controller.psaLookup("PSA12345678A", "IP14100000000A").apply(FakeRequest())
       status(result) mustBe BAD_REQUEST
     }
-  "return 202 when Internal Server Error is returned from nps" in{
-    when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+    "return 202 when Internal Server Error is returned from nps" in {
+      when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(202)))
 
-    val result = testController.psaLookup("PSA12345678A", "IP14100000000A").apply(FakeRequest())
-    status(result) mustBe INTERNAL_SERVER_ERROR
+      val result = controller.psaLookup("PSA12345678A", "IP14100000000A").apply(FakeRequest())
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 }
