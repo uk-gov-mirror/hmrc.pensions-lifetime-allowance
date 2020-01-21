@@ -34,15 +34,15 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "0.37.0"
+  private val bootstrapPlayVersion = "1.3.0"
   private val domainVersion = "5.6.0-play-26"
-  private val hmrcTestVersion = "3.6.0-play-26"
-  private val scalaTestVersion = "3.0.0"
-  private val mockitoCoreVersion = "2.18.3"
+  private val hmrcTestVersion = "3.9.0-play-26"
+  private val scalaTestVersion = "3.0.8"
+  private val mockitoCoreVersion = "3.2.4"
   private val pegdownVersion = "1.6.0"
-  private val jsoupVersion = "1.10.2"
+  private val jsoupVersion = "1.12.1"
   private val scalatestPlusPlayVersion = "3.1.2"
-  private val authClientVersion = "2.20.0-play-26"
+  private val authClientVersion = "2.32.2-play-26"
 
   val compile = Seq(
     ws,
@@ -65,7 +65,7 @@ private object AppDependencies {
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
         "org.mockito" % "mockito-core" % mockitoCoreVersion % scope,
-        "com.github.tomakehurst" % "wiremock-jre8" % "2.21.0" % scope
+        "com.github.tomakehurst" % "wiremock-jre8" % "2.25.1" % scope
       )
     }.test
   }
@@ -80,7 +80,7 @@ private object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "com.github.tomakehurst" % "wiremock" % "2.6.0" % scope,
+        "com.github.tomakehurst" % "wiremock" % "2.25.1" % scope,
         "uk.gov.hmrc" %% "auth-client" % authClientVersion
       )
     }.test
