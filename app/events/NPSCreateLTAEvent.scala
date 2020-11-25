@@ -16,12 +16,7 @@
 
 package events
 
-import play.api.libs.json.JsValue
-import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.audit.AuditExtensions._
-import uk.gov.hmrc.play.http._
-import play.api.libs.json.{JsObject, JsPath}
-import uk.gov.hmrc.time.DateTimeUtils
+import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.HeaderCarrier
 
 class NPSCreateLTAEvent(
