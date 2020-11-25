@@ -16,7 +16,6 @@
 
 package events
 
-import uk.gov.hmrc.play.http._
 import play.api.libs.json.JsObject
 import uk.gov.hmrc.http.HeaderCarrier
 

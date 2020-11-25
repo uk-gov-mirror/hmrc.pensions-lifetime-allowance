@@ -149,7 +149,7 @@ trait NpsConnector {
                                   requestUrl: String,
                                   nino: String,
                                   requestTime: org.joda.time.DateTime,
-                                  response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): HttpResponseDetails = {
+                                  response: HttpResponse)(implicit hc: HeaderCarrier): HttpResponseDetails = {
 
     val responseBody = response.json.as[JsObject]
     val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")

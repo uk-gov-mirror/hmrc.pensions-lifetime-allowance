@@ -5,15 +5,16 @@ object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "1.3.0"
-  private val domainVersion = "5.6.0-play-26"
+  private val bootstrapPlayVersion = "1.6.0"
+  private val domainVersion = "5.10.0-play-26"
   private val hmrcTestVersion = "3.9.0-play-26"
   private val scalaTestVersion = "3.0.8"
-  private val mockitoCoreVersion = "3.2.4"
+  private val mockitoCoreVersion = "3.6.0"
   private val pegdownVersion = "1.6.0"
-  private val jsoupVersion = "1.12.1"
+  private val jsoupVersion = "1.13.1"
   private val scalatestPlusPlayVersion = "3.1.2"
-  private val authClientVersion = "2.32.2-play-26"
+  private val authClientVersion = "3.2.0-play-26"
+  private val wiremockVersion = "2.25.1"
 
   val compile = Seq(
     ws,
@@ -23,7 +24,7 @@ object AppDependencies {
 
   trait TestDependencies {
     lazy val scope: String = "test"
-    lazy val test : Seq[ModuleID] = ???
+    lazy val test: Seq[ModuleID] = ???
   }
 
   object Test {
@@ -36,7 +37,7 @@ object AppDependencies {
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
         "org.mockito" % "mockito-core" % mockitoCoreVersion % scope,
-        "com.github.tomakehurst" % "wiremock-jre8" % "2.25.1" % scope
+        "com.github.tomakehurst" % "wiremock-jre8" % wiremockVersion % scope
       )
     }.test
   }
@@ -51,7 +52,7 @@ object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "com.github.tomakehurst" % "wiremock" % "2.25.1" % scope,
+        "com.github.tomakehurst" % "wiremock" % wiremockVersion % scope,
         "uk.gov.hmrc" %% "auth-client" % authClientVersion
       )
     }.test
