@@ -203,7 +203,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
   "AmendProtectionsController" when {
 
-    "amending an IP2016 application" should {
+    "amending an IP2016 application" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
@@ -249,7 +249,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2016 application which results in a Service Unavailable response" should {
+    "submitting an amend IP2016 application which results in a Service Unavailable response" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
@@ -295,7 +295,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2016 application which results in a generic 500 response" should {
+    "submitting an amend IP2016 application which results in a generic 500 response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -343,7 +343,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2016 application which results in a Unauthorised response" should {
+    "submitting an amend IP2016 application which results in a Unauthorised response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -392,7 +392,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "submitting an amend IP2016 application which results in a generic 400 response" should {
+    "submitting an amend IP2016 application which results in a generic 400 response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -441,7 +441,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "submitting an amend IP2016 application which results in a BadRequest response" should {
+    "submitting an amend IP2016 application which results in a BadRequest response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -490,7 +490,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "amending an IP2014 application" should {
+    "amending an IP2014 application" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
@@ -536,7 +536,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2014 application which results in a Service Unavailable response" should {
+    "submitting an amend IP2014 application which results in a Service Unavailable response" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
       val id = 1
@@ -582,7 +582,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2014 application which results in a generic 500 response" should {
+    "submitting an amend IP2014 application which results in a generic 500 response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -630,7 +630,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an amend IP2014 application which results in a Unauthorised response" should {
+    "submitting an amend IP2014 application which results in a Unauthorised response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -679,7 +679,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "submitting an amend IP2014 application which results in a generic 400 response" should {
+    "submitting an amend IP2014 application which results in a generic 400 response" in {
 
 
       val ninoWithoutSuffix = "AA100001"
@@ -728,7 +728,7 @@ class AmendProtectionsControllerSpec extends IntegrationSpec {
 
     }
 
-    "submitting an amend IP2014 application which results in a BadRequest response" should {
+    "submitting an amend IP2014 application which results in a BadRequest response" in {
 
 
       val ninoWithoutSuffix = "AA100001"

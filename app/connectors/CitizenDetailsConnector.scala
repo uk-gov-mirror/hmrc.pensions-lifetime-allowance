@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ sealed trait CitizenRecordCheckResult
 case object CitizenRecordOK extends CitizenRecordCheckResult
 case object CitizenRecordLocked extends CitizenRecordCheckResult
 case object CitizenRecordNotFound extends CitizenRecordCheckResult
-case class CitizenRecordOther4xxResponse(e: Upstream4xxResponse) extends CitizenRecordCheckResult
-case class CitizenRecord5xxResponse(e: Upstream5xxResponse) extends CitizenRecordCheckResult
+case class CitizenRecordOther4xxResponse(e: UpstreamErrorResponse) extends CitizenRecordCheckResult
+case class CitizenRecord5xxResponse(e: UpstreamErrorResponse) extends CitizenRecordCheckResult
 
 trait CitizenDetailsConnector {
   def http: DefaultHttpClient
@@ -62,10 +62,17 @@ trait CitizenDetailsConnector {
       http.GET[HttpResponse](requestUrl) map {
         _ => CitizenRecordOK
       } recover {
-        case e: Upstream4xxResponse if e.upstreamResponseCode == LOCKED => CitizenRecordLocked
+        case e: UpstreamErrorResponse if e.statusCode == LOCKED => CitizenRecordLocked
         case e: NotFoundException => CitizenRecordNotFound
-        case e: Upstream4xxResponse => CitizenRecordOther4xxResponse(e)
-        case e: Upstream5xxResponse => CitizenRecord5xxResponse(e)
+        case e: UpstreamErrorResponse
+          if e.statusCode >= BAD_REQUEST && e.statusCode < INTERNAL_SERVER_ERROR  => {
+          CitizenRecordOther4xxResponse(e)
+        }
+        case e: BadRequestException => CitizenRecordOther4xxResponse(UpstreamErrorResponse(e.message, e.responseCode))
+        case e: UpstreamErrorResponse
+          if e.statusCode >= INTERNAL_SERVER_ERROR  => {
+          CitizenRecord5xxResponse(e)
+        }
       }
     }
   }

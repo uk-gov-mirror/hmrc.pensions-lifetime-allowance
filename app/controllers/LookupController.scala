@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package controllers
 
 import connectors.NpsConnector
+
 import javax.inject.Inject
 import model.Error
-import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -33,13 +33,15 @@ class DefaultLookupController @Inject()(val npsConnector: NpsConnector,
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  def psaLookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async { implicit request =>
+  def psaLookup(psaRef: String, ltaRef: String): Action[AnyContent] = Action.async {
     npsConnector.getPSALookup(psaRef, ltaRef).map { response =>
       response.status match {
-        case OK => Ok(response.json)
+        case OK => {
+          Ok(response.json)
+        }
         case _ =>
           val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.json}"))
-          Logger.error(error.toString)
+          logger.error(error.toString)
           InternalServerError(error)
       }
     }.recover {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,25 @@
 
 package controllers
 
-import java.util.Random
+import util.TestUtils
 
+import java.util.Random
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.mvc._
 import util.NinoHelper
 import play.api.libs.json._
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito._
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
 import play.api.test.{FakeHeaders, FakeRequest}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatestplus.play.PlaySpec
 import uk.gov.hmrc.domain.Generator
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import _root_.mock.AuthMock
+import org.mockito.Mockito.when
+import org.scalatest.Matchers.convertToAnyShouldWrapper
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.test.Helpers._
 import services.ProtectionService
@@ -39,7 +42,7 @@ import services.ProtectionService
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier}
 
-class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with AuthMock with GuiceOneServerPerSuite {
+class CreateProtectionsControllerSpec extends PlaySpec with MockitoSugar with BeforeAndAfterEach with AuthMock with GuiceOneServerPerSuite with TestUtils {
 
   private implicit val system: ActorSystem = ActorSystem("test-sys")
   private implicit val mat: ActorMaterializer = ActorMaterializer()
@@ -125,7 +128,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
     block(request)
   }
 
-  "CreateProtectionController" should {
+  "CreateProtectionController" when {
     "respond to a valid Create Protection request with OK" in {
       when(mockService.applyForProtection(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(model.HttpResponseDetails(200, JsSuccess(successfulCreateFP2016NPSResponseBody))))
@@ -156,6 +159,7 @@ class CreateProtectionsControllerSpec extends UnitSpec with MockitoSugar with Be
     }
 
     "handle an invalid Json submission" in {
+      import scala.concurrent.ExecutionContext.Implicits.global
       lazy val fakeRequest = FakeRequest(
         method = "POST",
         uri = "",

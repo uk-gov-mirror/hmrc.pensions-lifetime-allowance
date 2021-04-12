@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package model
 
+import org.scalatest.Matchers.convertToAnyShouldWrapper
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatestplus.play.PlaySpec
 
-class ReadProtectionsModelSpec extends UnitSpec {
+class ReadProtectionsModelSpec extends PlaySpec {
 
-  "ReadProtectionsModel" should {
+  "ReadProtectionsModel" when {
 
     "read correctly from json" when {
 

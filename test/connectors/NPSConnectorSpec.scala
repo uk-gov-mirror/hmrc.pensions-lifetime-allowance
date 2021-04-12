@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 package connectors
 
-import java.util.Random
+import org.scalatest.Matchers.convertToAnyShouldWrapper
+import org.scalatestplus.mockito.MockitoSugar
 
-import org.scalatest.mockito.MockitoSugar
+import java.util.Random
 import util._
 import play.api.libs.json._
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import uk.gov.hmrc.play.http.ws.WSHttp
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.time.DateTimeUtils
+import org.scalatestplus.play.PlaySpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class NPSConnectorSpec extends UnitSpec with MockitoSugar {
+class NPSConnectorSpec extends PlaySpec with MockitoSugar {
 
   private val mockHttp = mock[DefaultHttpClient]
 
@@ -53,24 +52,24 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  "The NPS connector implicit header carrier  " should {
+  "The NPS connector implicit header carrier  " when {
     "should have the environment and authorisation headers set" in {
-      testNPSConnector.addExtraHeaders.headers.exists(_._1 == "Environment") shouldBe true
-      testNPSConnector.addExtraHeaders.headers.exists(_._1 == "Authorization") shouldBe true
+      testNPSConnector.addExtraHeaders.extraHeaders.exists(_._1 == "Environment") shouldBe true
+      testNPSConnector.addExtraHeaders.authorization.isDefined shouldBe true
     }
   }
 
-  "The  NPS Connector response handler" should {
+  "The  NPS Connector response handler" when {
     "handle 409 responses as successes and pass the status back unmodifed" in {
-      val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(409))
+      val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(409, ""))
       handledHttpResponse.status shouldBe 409
     }
   }
 
-  "The NPS Connector response handler" should {
+  "The NPS Connector response handler" when {
     "handle non-OK responses other than 409 as failures and throw an exception" in {
       try {
-        val handledHttpResponse =  NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(400))
+        NpsResponseHandler.handleNpsResponse("POST", "", HttpResponse(400, ""))
         fail("Exception not thrown")
       } catch {
         case ex: Throwable =>
@@ -78,25 +77,25 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  "The NPS Connector getApplyUrl method" should {
+  "The NPS Connector getApplyUrl method" when {
     "return a  URL that contains the nino passed to it" in {
       testNPSConnector.getApplyUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
     }
   }
 
-  "The NPS Connector getAmendUrl method" should {
+  "The NPS Connector getAmendUrl method" when {
     "return a  URL that contains the nino passed to it" in {
       testNPSConnector.getAmendUrl(testNinoWithoutSuffix,1).contains(testNinoWithoutSuffix) shouldBe true
     }
   }
 
-  "The NPS Connector getReadUrl method" should {
+  "The NPS Connector getReadUrl method" when {
     "return a  URL that contains the nino passed to it" in {
       testNPSConnector.getReadUrl(testNinoWithoutSuffix).contains(testNinoWithoutSuffix) shouldBe true
     }
   }
 
-  "The NPS Connector handleAuditableResponse" should {
+  "The NPS Connector handleAuditableResponse" when {
     "return a HTTPResponseDetails object with valid fields" in {
       val requestStr =
         s"""
@@ -107,24 +106,14 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
           |   }
           | }
         """.stripMargin
-      val requestBody = Json.parse(requestStr).as[JsObject]
-      val responseStr =
-        s"""
-          {
-          |"nino": "$testNinoWithoutSuffix",
-          | "protection": {
-          |   "type": 1
-          |  }
-          |}
-        """.stripMargin
       val responseBody = Json.parse(requestStr).as[JsObject]
-      val responseDetails = testNPSConnector.handleAuditableResponse(testNino, HttpResponse(200, Some(responseBody)), None)
+      val responseDetails = testNPSConnector.handleAuditableResponse(testNino, HttpResponse(200, responseBody.toString()), None)
       responseDetails.status shouldBe 200
       responseDetails.body.isSuccess shouldBe true
     }
   }
 
-  "The NPS Connector handleAuditableResponse" should {
+  "The NPS Connector handleAuditableResponse" when {
     "return a HTTPResponseDetails object with a 400 status if the nino returned differs from that sent" in {
       val (t1NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
       val (t2NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
@@ -138,31 +127,15 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
            |   }
            | }
         """.stripMargin
-      val requestBody = Json.parse(requestStr).as[JsObject]
-      val responseStr =
-        s"""
-          {
-           |"nino": "$t2NinoWithoutSuffix",
-           | "protection": {
-           |   "type": 1
-           |  }
-           |}
-        """.stripMargin
       val responseBody = Json.parse(requestStr).as[JsObject]
-      val responseDetails = testNPSConnector.handleAuditableResponse(testNino, HttpResponse(200, Some(responseBody)), None)
+      val responseDetails = testNPSConnector.handleAuditableResponse(testNino, HttpResponse(200, responseBody.toString()), None)
       responseDetails.status shouldBe 400
       responseDetails.body.isSuccess shouldBe true
     }
   }
 
-  "The NPS Connector handleEResponse" should {
+  "The NPS Connector handleEResponse" when {
     "return a HTTPResponseDetails object with valid fields" in {
-      val requestStr =
-        s"""
-           |{
-           | "nino": "$testNinoWithoutSuffix"
-           | }
-        """.stripMargin
       val responseStr =
         s"""
           {
@@ -172,20 +145,16 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
            |  }
            |}
         """.stripMargin
-      val responseBody = Json.parse(requestStr).as[JsObject]
       val responseDetails = testNPSConnector.handleExpectedReadResponse(
-        "http://localhost:80/path",
         testNino,
-        DateTimeUtils.now,
-        HttpResponse(200, Some(responseBody)))
+        HttpResponse(200, responseStr))
       responseDetails.status shouldBe 200
       responseDetails.body.isSuccess shouldBe true
     }
   }
-  "The NPS Connector handleExpectedReadResponse" should {
+  "The NPS Connector handleExpectedReadResponse" when {
     "return a HTTPResponseDetails object with a 400 status if the nino returned differs from that sent" in {
       val (t1NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
-      val (t2NinoWithoutSuffix,_) = NinoHelper.dropNinoSuffix(randomNino)
 
       val requestStr =
         s"""
@@ -193,21 +162,9 @@ class NPSConnectorSpec extends UnitSpec with MockitoSugar {
            | "nino": "$t1NinoWithoutSuffix"
            | }
         """.stripMargin
-      val responseStr =
-        s"""
-          {
-           |"nino": "$t2NinoWithoutSuffix",
-           | "protection": {
-           |   "type": 1
-           |  }
-           |}
-        """.stripMargin
-      val responseBody = Json.parse(requestStr).as[JsObject]
+
       val responseDetails = testNPSConnector.handleExpectedReadResponse(
-        "http://localhost:80/path",
-        testNino,
-        DateTimeUtils.now,
-        HttpResponse(200, Some((responseBody))))
+        testNino, HttpResponse(200, requestStr))
       responseDetails.status shouldBe 400
       responseDetails.body.isSuccess shouldBe true
     }

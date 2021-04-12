@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,24 @@
 
 package controllers
 
+import util.TestUtils
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import model.HttpResponseDetails
+import org.scalatest.Matchers.convertToAnyShouldWrapper
 import play.api.libs.json._
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatestplus.play.PlaySpec
 import play.api.http.Status._
-import uk.gov.hmrc.http.{ BadRequestException, Upstream4xxResponse, Upstream5xxResponse }
+import uk.gov.hmrc.http.{BadRequestException, Upstream4xxResponse, Upstream5xxResponse, UpstreamErrorResponse}
 
-class NPSResponseHandlerSpec extends UnitSpec {
+class NPSResponseHandlerSpec extends PlaySpec with TestUtils {
+
   val testResponseHandler: NPSResponseHandler = new NPSResponseHandler {}
 
   private implicit val system: ActorSystem = ActorSystem("test-sys")
   private implicit val mat: ActorMaterializer = ActorMaterializer()
 
-  "NPSResponseHandler" should {
+  "NPSResponseHandler" when {
     "process a NPS response" when {
       "NPS returns an OK" in {
         val fakeResponse = HttpResponseDetails(OK, JsSuccess(Json.obj("result" -> JsString("success"))))
@@ -76,22 +79,22 @@ class NPSResponseHandlerSpec extends UnitSpec {
 
     "handle a NPS error" when {
       "a Service unavailable response is received" in {
-        val npsError = Upstream5xxResponse("service unavailable", SERVICE_UNAVAILABLE, 1)
+        val npsError = UpstreamErrorResponse("service unavailable", SERVICE_UNAVAILABLE, 1)
         val result = testResponseHandler.handleNPSError(npsError, "[TestController] [callNps]")
         status(result) shouldBe SERVICE_UNAVAILABLE
       }
       "a Bad gateway response is received" in {
-        val npsError = Upstream5xxResponse("bad gateway", BAD_GATEWAY, 1)
+        val npsError = UpstreamErrorResponse("bad gateway", BAD_GATEWAY, 1)
         val result = testResponseHandler.handleNPSError(npsError, "[TestController] [callNps]")
         status(result) shouldBe INTERNAL_SERVER_ERROR
       }
       "an Unauthorized response is received" in {
-        val npsError = Upstream4xxResponse("unauthorized", UNAUTHORIZED, 1)
+        val npsError = UpstreamErrorResponse("unauthorized", UNAUTHORIZED, 1)
         val result = testResponseHandler.handleNPSError(npsError, "[TestController] [callNps]")
         status(result) shouldBe UNAUTHORIZED
       }
       "a Forbidden response is received" in {
-        val npsError = Upstream4xxResponse("forbidden", FORBIDDEN, 1)
+        val npsError = UpstreamErrorResponse("forbidden", FORBIDDEN, 1)
         val result = testResponseHandler.handleNPSError(npsError, "[TestController] [callNps]")
         status(result) shouldBe INTERNAL_SERVER_ERROR
       }

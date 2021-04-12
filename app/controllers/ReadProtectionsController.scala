@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package controllers
 
 import auth.{AuthClientConnector, AuthorisedActions}
 import connectors.CitizenDetailsConnector
+
 import javax.inject.Inject
 import model.Error
-import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.ProtectionService
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -50,7 +50,7 @@ class ReadProtectionsController @Inject()(val authConnector: AuthClientConnector
           case OK if response.body.isSuccess => Ok(response.body.get)
           case _ =>
             val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.body}"))
-            Logger.error(error.toString)
+            logger.error(error.toString)
             InternalServerError(error)
         }
       }.recover {
@@ -64,7 +64,7 @@ class ReadProtectionsController @Inject()(val authConnector: AuthClientConnector
    * @param nino
    * @return a json object with a single field 'count' set to the number of existing protections
    */
-  def readExistingProtectionsCount(nino: String): Action[AnyContent] = Action.async { implicit request =>
+  def readExistingProtectionsCount(nino: String): Action[AnyContent] = Action.async {
     protectionService.readExistingProtections(nino).map { response =>
       response.status match {
         case OK if response.body.isSuccess =>
@@ -76,7 +76,7 @@ class ReadProtectionsController @Inject()(val authConnector: AuthClientConnector
           Ok(JsObject(Seq("count" -> JsNumber(count))))
         case _ =>
           val error = Json.toJson(Error(s"NPS request resulted in a response with: HTTP status = ${response.status} body = ${response.body}"))
-          Logger.error(error.toString)
+          logger.error(error.toString)
           InternalServerError(error)
       }
     }.recover {
