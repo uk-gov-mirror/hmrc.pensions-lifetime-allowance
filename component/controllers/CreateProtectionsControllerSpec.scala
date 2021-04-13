@@ -278,7 +278,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
 
   "CreateProtectionsController" when {
 
-    "submitting a successful application for IP2016" should {
+    "submitting a successful application for IP2016" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
 
@@ -322,7 +322,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting a conflicting application for IP2016" should {
+    "submitting a conflicting application for IP2016" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -367,7 +367,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an application which results in a Service Unavailable response" should {
+    "submitting an application which results in a Service Unavailable response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -413,7 +413,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an application which results in a generic 500 response" should {
+    "submitting an application which results in a generic 500 response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -458,7 +458,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an application which results in a Unauthorised response" should {
+    "submitting an application which results in a Unauthorised response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -503,7 +503,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an application which results in a generic 400 response" should {
+    "submitting an application which results in a generic 400 response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -548,7 +548,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an application which results in a BadRequest response" should {
+    "submitting an application which results in a BadRequest response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -593,7 +593,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting a successful application for FP2016" should {
+    "submitting a successful application for FP2016" in {
       val ninoWithoutSuffix = "AA100001"
       val nino = s"${ninoWithoutSuffix}A"
 
@@ -637,7 +637,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting a conflicting application for FP2016" should {
+    "submitting a conflicting application for FP2016" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -682,7 +682,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an FP application which results in a Service Unavailable response" should {
+    "submitting an FP application which results in a Service Unavailable response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -727,7 +727,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an FP application which results in a generic 500 response" should {
+    "submitting an FP application which results in a generic 500 response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -772,7 +772,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an FP application which results in a Unauthorised response" should {
+    "submitting an FP application which results in a Unauthorised response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -817,7 +817,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an FP application which results in a generic 400 response" should {
+    "submitting an FP application which results in a generic 400 response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"
@@ -862,7 +862,7 @@ class CreateProtectionsControllerSpec extends IntegrationSpec {
       }
     }
 
-    "submitting an FP application which results in a BadRequest response" should {
+    "submitting an FP application which results in a BadRequest response" in {
 
       val ninoWithoutSuffix = "AA100002"
       val nino = s"${ninoWithoutSuffix}A"

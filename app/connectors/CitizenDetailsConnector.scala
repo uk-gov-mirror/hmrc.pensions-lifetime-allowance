@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,33 +39,43 @@ class DefaultCitizenDetailsConnector @Inject()(val http: DefaultHttpClient,
 }
 
 sealed trait CitizenRecordCheckResult
+
 case object CitizenRecordOK extends CitizenRecordCheckResult
+
 case object CitizenRecordLocked extends CitizenRecordCheckResult
+
 case object CitizenRecordNotFound extends CitizenRecordCheckResult
-case class CitizenRecordOther4xxResponse(e: Upstream4xxResponse) extends CitizenRecordCheckResult
-case class CitizenRecord5xxResponse(e: Upstream5xxResponse) extends CitizenRecordCheckResult
+
+case class CitizenRecordOther4xxResponse(e: UpstreamErrorResponse) extends CitizenRecordCheckResult
+
+case class CitizenRecord5xxResponse(e: UpstreamErrorResponse) extends CitizenRecordCheckResult
 
 trait CitizenDetailsConnector {
   def http: DefaultHttpClient
+
   val serviceUrl: String
   val checkRequired: Boolean
-  
+
   def getCitizenRecordCheckUrl(nino: String): String = {
     serviceUrl + s"/citizen-details/$nino/designatory-details"
   }
-
+  implicit val legacyRawReads = HttpReadsInstances.throwOnFailure(HttpReadsInstances.readEitherOf(HttpReadsInstances.readRaw))
   def checkCitizenRecord(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CitizenRecordCheckResult] = {
-    if(!checkRequired) {
+    if (!checkRequired) {
       Future.successful(CitizenRecordOK)
     } else {
       val requestUrl = getCitizenRecordCheckUrl(nino)
       http.GET[HttpResponse](requestUrl) map {
         _ => CitizenRecordOK
       } recover {
-        case e: Upstream4xxResponse if e.upstreamResponseCode == LOCKED => CitizenRecordLocked
-        case e: NotFoundException => CitizenRecordNotFound
-        case e: Upstream4xxResponse => CitizenRecordOther4xxResponse(e)
-        case e: Upstream5xxResponse => CitizenRecord5xxResponse(e)
+        case e: UpstreamErrorResponse =>
+          e.statusCode match {
+            case NOT_FOUND => CitizenRecordNotFound
+            case LOCKED => CitizenRecordLocked
+            case status if status >= BAD_REQUEST && status < INTERNAL_SERVER_ERROR =>
+              CitizenRecordOther4xxResponse(e)
+            case status if status >= INTERNAL_SERVER_ERROR => CitizenRecord5xxResponse(e)
+          }
       }
     }
   }

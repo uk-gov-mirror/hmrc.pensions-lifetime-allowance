@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package controllers
 
 import connectors.NpsConnector
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito._
+import org.mockito.Mockito.{reset, when}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
@@ -31,7 +33,7 @@ import play.api.test.Helpers._
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse}
 
-class LookupControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
+class LookupControllerSpec extends PlaySpec with GuiceOneServerPerSuite with BeforeAndAfterEach {
 
   implicit lazy val hc = HeaderCarrier()
   val mockNpsConnector: NpsConnector = mock[NpsConnector]
@@ -51,10 +53,10 @@ class LookupControllerSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
     reset(mockNpsConnector)
   }
 
-  "LookupController" should {
+  "LookupController" when {
     "return 200 when OK is returned from nps" in {
       when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(OK, Some(validResponse))))
+        .thenReturn(Future.successful(HttpResponse(OK, validResponse.toString())))
 
       val result = controller.psaLookup("PSA12345678A", "IP141000000000A").apply(FakeRequest())
       status(result) mustBe OK
@@ -69,7 +71,7 @@ class LookupControllerSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
     }
     "return 202 when Internal Server Error is returned from nps" in {
       when(mockNpsConnector.getPSALookup(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(202)))
+        .thenReturn(Future.successful(HttpResponse(202, validResponse.toString())))
 
       val result = controller.psaLookup("PSA12345678A", "IP14100000000A").apply(FakeRequest())
       status(result) mustBe INTERNAL_SERVER_ERROR

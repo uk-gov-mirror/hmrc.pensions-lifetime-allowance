@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,31 @@
 package controllers
 
 import model.{Error, HttpResponseDetails}
-import play.api.Logger
+import play.api.{Logger, Logging}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.http.Status._
-
 import uk.gov.hmrc.http._
 
-trait NPSResponseHandler {
+trait NPSResponseHandler extends Logging {
 
   private[controllers] def handleNPSError(error : Throwable, errorContext: String): Result = {
     error match {
-      case err @ Upstream5xxResponse(errorDetails, SERVICE_UNAVAILABLE, _) =>
-        Logger.error(s"$errorContext $errorDetails", err)
+      case err @ Upstream5xxResponse(errorDetails, SERVICE_UNAVAILABLE, _, _) =>
+        logger.error(s"$errorContext $errorDetails", err)
         ServiceUnavailable(errorDetails)
-      case err @ Upstream5xxResponse(errorDetails, _, _) =>
-        Logger.error(s"$errorContext $errorDetails", err)
+      case err @ Upstream5xxResponse(errorDetails, _, _, _) =>
+        logger.error(s"$errorContext $errorDetails", err)
         InternalServerError(errorDetails)
       case err @ Upstream4xxResponse(errorDetails, UNAUTHORIZED, _, _) =>
-        Logger.error(s"$errorContext $errorDetails", err)
+        logger.error(s"$errorContext $errorDetails", err)
         Unauthorized(errorDetails)
       case err @ Upstream4xxResponse(errorDetails, _, _, _) =>
-        Logger.error(s"$errorContext $errorDetails", err)
+        logger.error(s"$errorContext $errorDetails", err)
         InternalServerError(errorDetails)
       case badRequest: BadRequestException =>
-        Logger.error(s"$errorContext ${badRequest.getMessage}", badRequest)
+        logger.error(s"$errorContext ${badRequest.getMessage}", badRequest)
         BadRequest(badRequest.getMessage)
       case e => throw e
     }

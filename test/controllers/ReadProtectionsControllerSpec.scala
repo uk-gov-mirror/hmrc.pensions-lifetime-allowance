@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@
 package controllers
 
 import java.util.Random
-
 import akka.stream.Materializer
 import connectors.{CitizenDetailsConnector, CitizenRecordOK}
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito._
+import org.scalatestplus.mockito.MockitoSugar
 import _root_.mock.AuthMock
 import com.codahale.metrics.SharedMetricRegistries
 import model.HttpResponseDetails
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfter
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsError, JsObject, JsSuccess, Json}
@@ -142,7 +142,7 @@ class ReadProtectionsControllerSpec extends PlaySpec with GuiceOneServerPerSuite
     block(request)
   }
 
-  "ReadProtectionsController" should {
+  "ReadProtectionsController" when {
     "respond to a valid Read Protections request with OK" in {
 
       when(mockProtectionService.readExistingProtections(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
