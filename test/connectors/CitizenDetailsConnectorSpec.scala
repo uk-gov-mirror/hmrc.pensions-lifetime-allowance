@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,80 +16,73 @@
 
 package connectors
 
-import java.util.Random
-
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlPathMatching}
 import com.kenshoo.play.metrics.PlayModule
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito._
+import controllers.Assets.INTERNAL_SERVER_ERROR
 import org.scalatest.BeforeAndAfter
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import uk.gov.hmrc.domain.Generator
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.Matchers.convertToAnyShouldWrapper
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.http.Status.{BAD_REQUEST, LOCKED, NOT_FOUND, OK}
 import play.api.inject.guice.GuiceableModule
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
+import util.{TestUtils, WireMockHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
-import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 
 
-class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFakeApplication with BeforeAndAfter {
+class CitizenDetailsConnectorSpec extends PlaySpec with MockitoSugar with BeforeAndAfter with TestUtils
+  with GuiceOneAppPerSuite with WireMockHelper {
 
-  override def bindModules: Seq[GuiceableModule] = Seq(new PlayModule)
+  private val DefaultTestNino = "KA191435A"
+  private val DesignatoryDetailsUrl = s"/citizen-details/$DefaultTestNino/designatory-details"
+  private val DefaultLocalUrl = "http://localhost:8083"
 
-  val mockHttp: DefaultHttpClient = mock[DefaultHttpClient]
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  def bindModules: Seq[GuiceableModule] = Seq(new PlayModule)
 
   object testCitizenDetailsConnector extends CitizenDetailsConnector {
-    override val serviceUrl = "http://localhost:80"
-
-    override def http: DefaultHttpClient = mockHttp
-
+    override val serviceUrl = DefaultLocalUrl
+    override def http: DefaultHttpClient = app.injector.instanceOf[DefaultHttpClient]
     override val checkRequired = true
   }
 
   object NoCheckRequiredCitizenDetailsConnector extends CitizenDetailsConnector {
-    override val serviceUrl = "http://localhost:80"
-
-    override def http: DefaultHttpClient = mockHttp
-
+    override val serviceUrl = DefaultLocalUrl
+    override def http: DefaultHttpClient = app.injector.instanceOf[DefaultHttpClient]
     override val checkRequired = false
   }
 
-  val rand = new Random()
-  val ninoGenerator = new Generator(rand)
-
-  def randomNino: String = ninoGenerator.nextNino.nino.replaceFirst("MA", "AA")
-
-  val testNino: String = randomNino
-
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-
-  "The CitizenDetails Connector getCitizenRecordCheckUrl method" should {
+  "The CitizenDetails Connector getCitizenRecordCheckUrl method" when {
     "return a  URL that contains the nino passed to it" in {
-      testCitizenDetailsConnector.getCitizenRecordCheckUrl(testNino).contains(testNino) shouldBe true
+      testCitizenDetailsConnector.getCitizenRecordCheckUrl(DefaultTestNino).contains(DefaultTestNino) shouldBe true
     }
   }
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
+  "The CitizenDetails Connector checkCitizenRecord method" when {
     "return a CitizenRecordOK response when no check is needed" in {
-      val f = NoCheckRequiredCitizenDetailsConnector.checkCitizenRecord(testNino)
+      val f = NoCheckRequiredCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
       res shouldBe CitizenRecordOK
     }
   }
 
-  before {
-    reset(mockHttp)
-  }
+  "The CitizenDetails Connector checkCitizenRecord method" when {
 
-  "The CitizenDetails Connector checkCitizenRecord method" should {
     "return a valid HTTPResponse for successful retrieval" in {
+      server.stubFor(
+        get(urlPathMatching(DesignatoryDetailsUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+          )
+      )
 
-      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(HttpResponse(200)))
-
-      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+      val f = testCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
       res shouldBe CitizenRecordOK
@@ -97,12 +90,15 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
     "return an error if NotFoundException received" in {
 
-      val response = new NotFoundException("")
+      server.stubFor(
+        get(urlPathMatching(DesignatoryDetailsUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(NOT_FOUND)
+          )
+      )
 
-      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
-
-      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+      val f = testCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
       res shouldBe CitizenRecordNotFound
@@ -110,40 +106,48 @@ class CitizenDetailsConnectorSpec extends UnitSpec with MockitoSugar with WithFa
 
     "return an error if Upstream4xxResponse received" in {
 
-      val response = new Upstream4xxResponse("", 400, 400)
+      server.stubFor(
+        get(urlPathMatching(DesignatoryDetailsUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+          )
+      )
 
-      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
-
-      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+      val f = testCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
-      res shouldBe CitizenRecordOther4xxResponse(response)
+      res.isInstanceOf[CitizenRecordOther4xxResponse] shouldBe true
     }
 
 
     "return an error if Upstream5xxResponse received" in {
 
-      val response = new Upstream5xxResponse("", 500, 500)
+      server.stubFor(
+        get(urlPathMatching(DesignatoryDetailsUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+          )
+      )
 
-      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
-
-      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+      val f = testCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
-      res shouldBe CitizenRecord5xxResponse(response)
+      res.isInstanceOf[CitizenRecord5xxResponse] shouldBe true
     }
 
 
     "return an error if CitizenRecordLocked received" in {
 
-      val response = new Upstream4xxResponse("", 423, 423)
-
-      when(mockHttp.GET[HttpResponse](ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.failed(response))
-
-      val f = testCitizenDetailsConnector.checkCitizenRecord(testNino)
+      server.stubFor(
+        get(urlPathMatching(DesignatoryDetailsUrl))
+          .willReturn(
+            aResponse()
+              .withStatus(LOCKED)
+          )
+      )
+      val f = testCitizenDetailsConnector.checkCitizenRecord(DefaultTestNino)
 
       val res = await(f)
       res shouldBe CitizenRecordLocked

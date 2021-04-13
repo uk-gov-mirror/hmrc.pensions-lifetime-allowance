@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,17 @@
 package connectors
 
 import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
+
 import javax.inject.Inject
 import model.{Error, HttpResponseDetails}
-import play.api.Mode
-import play.api.{Configuration, Environment, Logger}
+import org.joda.time.{DateTime, DateTimeZone}
+import play.api.{Configuration, Environment, Logging, Mode}
 import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import uk.gov.hmrc.time.DateTimeUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +43,7 @@ class DefaultNpsConnector @Inject()(val http: DefaultHttpClient,
   val mode: Mode = environment.mode
 }
 
-trait NpsConnector {
+trait NpsConnector extends Logging {
   val http: DefaultHttpClient
   val serviceUrl: String
   val serviceAccessToken: String
@@ -105,7 +104,7 @@ trait NpsConnector {
     val responseBody = response.json.as[JsObject]
     val httpStatus = response.status
 
-    Logger.debug(s"Created audit event: ${auditEvent.getOrElse("<None>")}")
+    logger.debug(s"Created audit event: ${auditEvent.getOrElse("<None>")}")
     auditEvent.foreach {
       audit.sendEvent(_)
     }
@@ -118,7 +117,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.warn(report)
+      logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }
@@ -133,11 +132,10 @@ trait NpsConnector {
 
   def readExistingProtections(nino: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponseDetails] = {
     val requestUrl = getReadUrl(nino)
-    val requestTime = DateTimeUtils.now
     val responseFut = get(requestUrl)(hc = addExtraHeaders(hc), ec = ec)
 
     responseFut map { expectedResponse =>
-      handleExpectedReadResponse(requestUrl, nino, requestTime, expectedResponse)
+      handleExpectedReadResponse(nino, expectedResponse)
     }
   }
 
@@ -145,11 +143,7 @@ trait NpsConnector {
     http.GET[HttpResponse](requestUrl)
   }
 
-  def handleExpectedReadResponse(
-                                  requestUrl: String,
-                                  nino: String,
-                                  requestTime: org.joda.time.DateTime,
-                                  response: HttpResponse)(implicit hc: HeaderCarrier): HttpResponseDetails = {
+  def handleExpectedReadResponse(nino: String, response: HttpResponse): HttpResponseDetails = {
 
     val responseBody = response.json.as[JsObject]
     val responseNino = responseBody.value.get("nino").map { n => n.as[String] }.getOrElse("")
@@ -159,7 +153,7 @@ trait NpsConnector {
     }
     else {
       val report = s"Received nino $responseNino is not same as sent nino $ninoWithoutSuffix"
-      Logger.warn(report)
+      logger.warn(report)
       HttpResponseDetails(400, JsSuccess(Json.toJson(Error(report)).as[JsObject]))
     }
   }

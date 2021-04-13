@@ -23,11 +23,11 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 
 
-trait IntegrationSpec extends UnitSpec
+trait IntegrationSpec extends PlaySpec
   with GuiceOneServerPerSuite with ScalaFutures with IntegrationPatience with Matchers
   with WiremockHelper with BeforeAndAfterEach with BeforeAndAfterAll {
 

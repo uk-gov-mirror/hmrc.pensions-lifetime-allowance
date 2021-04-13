@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ class ServiceBindings extends Module {
     bindServices() ++ bindConnectors()
 
   private def bindServices(): Seq[Binding[_]] = Seq(
-    bind(classOf[ProtectionService]).to(classOf[DefaultProtectionService]).eagerly()
+    play.api.inject.bind(classOf[ProtectionService]).to(classOf[DefaultProtectionService]).eagerly()
   )
 
   private def bindConnectors(): Seq[Binding[_]] = Seq(
-    bind(classOf[AuthClientConnector]).to(classOf[DefaultAuthClientConnector]).eagerly(),
-    bind(classOf[CitizenDetailsConnector]).to(classOf[DefaultCitizenDetailsConnector]).eagerly(),
-    bind(classOf[NpsConnector]).to(classOf[DefaultNpsConnector]).eagerly()
+    play.api.inject.bind(classOf[AuthClientConnector]).to(classOf[DefaultAuthClientConnector]).eagerly(),
+    play.api.inject.bind(classOf[CitizenDetailsConnector]).to(classOf[DefaultCitizenDetailsConnector]).eagerly(),
+    play.api.inject.bind(classOf[NpsConnector]).to(classOf[DefaultNpsConnector]).eagerly()
   )
 }

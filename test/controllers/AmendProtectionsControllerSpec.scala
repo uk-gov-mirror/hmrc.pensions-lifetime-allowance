@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 package controllers
 
 import java.util.Random
-
 import connectors.{CitizenDetailsConnector, CitizenRecordOK, NpsConnector}
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito._
 import _root_.mock.AuthMock
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.when
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.mvc.{ControllerComponents, Result}
@@ -33,9 +31,9 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.domain.Generator
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream5xxResponse, UpstreamErrorResponse}
 
-class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with AuthMock {
+class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSuite with AuthMock {
 
   val rand = new Random()
   val ninoGenerator = new Generator(rand)
@@ -125,7 +123,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
   }
 
 
-  "AmendProtectionController" should {
+  "AmendProtectionController" when {
     "respond to an invalid Amend Protection request with BAD_REQUEST" in {
 
       val fakeRequest = FakeRequest(
@@ -154,7 +152,7 @@ class AmendProtectionsControllerSpec  extends PlaySpec with GuiceOneServerPerSui
 
     "handle a 500 (INTERNAL_SERVER_ERROR) response from NPS service by passing it back to the caller" in {
       when(mockNpsConnector.amendProtection(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.failed(Upstream5xxResponse("test", INTERNAL_SERVER_ERROR, BAD_GATEWAY)))
+        .thenReturn(Future.failed(UpstreamErrorResponse("test", INTERNAL_SERVER_ERROR, BAD_GATEWAY)))
 
       val fakeRequest = FakeRequest(
         method = "PUT",
