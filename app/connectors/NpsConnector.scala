@@ -20,26 +20,32 @@ import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
 
 import javax.inject.Inject
 import model.{Error, HttpResponseDetails}
-import play.api.Logging
+import org.joda.time.{DateTime, DateTimeZone}
+import play.api.{Configuration, Environment, Logging, Mode}
 import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultNpsConnector @Inject()(val http: HttpClient,
+class DefaultNpsConnector @Inject()(val http: DefaultHttpClient,
+                                    environment: Environment,
+                                    val runModeConfiguration: Configuration,
                                     servicesConfig: ServicesConfig,
                                     val audit: AuditConnector) extends NpsConnector {
   override lazy val serviceUrl: String = servicesConfig.baseUrl("nps")
   override lazy val serviceAccessToken: String = servicesConfig.getConfString("nps.accessToken", "")
   override lazy val serviceEnvironment: String = servicesConfig.getConfString("nps.environment", "")
+
+  val mode: Mode = environment.mode
 }
 
 trait NpsConnector extends Logging {
-  val http: HttpClient
+  val http: DefaultHttpClient
   val serviceUrl: String
   val serviceAccessToken: String
   val serviceEnvironment: String

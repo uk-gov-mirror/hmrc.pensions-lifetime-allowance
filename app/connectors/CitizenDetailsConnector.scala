@@ -26,12 +26,16 @@ import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultCitizenDetailsConnector @Inject()(val http: HttpClient,
+class DefaultCitizenDetailsConnector @Inject()(val http: DefaultHttpClient,
+                                               environment: Environment,
+                                               val runModeConfiguration: Configuration,
                                                servicesConfig: ServicesConfig)
   extends CitizenDetailsConnector {
 
   override lazy val serviceUrl: String = servicesConfig.baseUrl("citizen-details")
   override lazy val checkRequired: Boolean = servicesConfig.getConfBool("citizen-details.checkRequired", defBool = true)
+
+  val mode: Mode = environment.mode
 }
 
 sealed trait CitizenRecordCheckResult
@@ -47,7 +51,7 @@ case class CitizenRecordOther4xxResponse(e: UpstreamErrorResponse) extends Citiz
 case class CitizenRecord5xxResponse(e: UpstreamErrorResponse) extends CitizenRecordCheckResult
 
 trait CitizenDetailsConnector {
-  def http: HttpClient
+  def http: DefaultHttpClient
 
   val serviceUrl: String
   val checkRequired: Boolean
