@@ -20,11 +20,11 @@ import events.{NPSAmendLTAEvent, NPSBaseLTAEvent, NPSCreateLTAEvent}
 
 import javax.inject.Inject
 import model.{Error, HttpResponseDetails}
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.{Configuration, Environment, Logging, Mode}
 import util.NinoHelper
 import play.api.libs.json._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient

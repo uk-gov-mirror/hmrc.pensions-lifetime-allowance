@@ -22,15 +22,14 @@ import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.{AuthorisationException, _}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthorisedActions extends AuthProvider with AuthorisedFunctions with Logging {
 
   def userAuthorised(nino: String)(body: => Future[Result])(implicit request: Request[_], ec: ExecutionContext): Future[Result] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    //implicit val hc: HeaderCarrier =  HeaderCarrierConverter.fromRequest(request.headers)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+
     authorised(Nino(hasNino = true, nino = Some(nino)) and ConfidenceLevel.L200) {
       citizenDetailsConnector.checkCitizenRecord(nino) flatMap {
         case CitizenRecordOK => body
