@@ -5,14 +5,13 @@ object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "4.1.0"
+  private val bootstrapPlayVersion = "3.4.0"
   private val domainVersion = "5.10.0-play-27"
   private val scalaTestVersion = "3.0.8"
   private val mockitoCoreVersion = "3.7.7"
   private val pegdownVersion = "1.6.0"
   private val jsoupVersion = "1.13.1"
   private val scalatestPlusPlayVersion = "4.0.3"
-  private val authClientVersion = "5.2.0-play-27"
   private val wiremockVersion = "2.27.2"
 
   val compile = Seq(
@@ -48,8 +47,7 @@ object AppDependencies {
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.jsoup" % "jsoup" % jsoupVersion % scope,
-        "com.github.tomakehurst" % "wiremock" % wiremockVersion % scope,
-        "uk.gov.hmrc" %% "auth-client" % authClientVersion
+        "com.github.tomakehurst" % "wiremock" % wiremockVersion % scope
       )
     }.test
   }
